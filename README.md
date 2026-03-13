@@ -1,10 +1,8 @@
 # nixos-iot
 
-After [years of building embedded Linux systems](https://charemma.de) with Yocto, Buildroot, and custom BSP stacks in regulated environments (medical devices, industrial automation), I kept running into the same friction: BitBake recipes nobody wants to touch, hours-long rebuilds for a one-line config change, BSP layers that diverge across product variants, and CI pipelines held together with duct tape. These tools earn their place in large-scale, safety-certified projects where fine-grained control over every binary matters. But for IoT -- where you want fast iteration, reproducible deployments, and a toolchain that doesn't require a dedicated build team -- they are overkill.
+Declarative IoT platform built on NixOS. Every device is defined as a NixOS configuration. A single `nix build` produces a reproducible SD card image with the OS, services, and application code baked in. Change a config option, rebuild in seconds, flash, boot -- done. No manual provisioning, no imperative state, no configuration drift across devices.
 
-This project explores NixOS as an alternative for IoT and embedded Linux. Every device is defined as a declarative NixOS configuration. A single `nix build` produces a reproducible SD card image with the OS, services, and application code baked in. Change a config option, rebuild in seconds, flash, boot -- done. No manual provisioning, no imperative state, no configuration drift across devices.
-
-Currently running in production on Raspberry Pi 5 devices collecting air quality data via SDS011 sensors, with Prometheus metrics exposed for monitoring.
+Currently running on Raspberry Pi 5 devices collecting air quality data via SDS011 sensors, with Prometheus metrics exposed for monitoring.
 
 ## Repository structure
 
@@ -124,3 +122,7 @@ The tradeoff is image size (larger than a minimal Yocto build) and less control 
 
 - [Getting started](docs/getting-started.md) -- prerequisites, building, flashing, first boot
 - [Architecture](docs/architecture.md) -- how flakes, modules, builders, and images fit together
+
+## Background
+
+This project grew out of [years of building embedded Linux systems](https://charemma.de) with Yocto, Buildroot, and custom BSP stacks in regulated environments (medical devices, industrial automation). These tools earn their place in large-scale, safety-certified projects where fine-grained control over every binary matters. But for IoT -- where you want fast iteration, reproducible deployments, and a toolchain that doesn't require a dedicated build team -- they are overkill. NixOS fills that gap.
