@@ -1,6 +1,10 @@
 # nixos-iot
 
-Declarative IoT platform built on NixOS. Produces reproducible SD card images for Raspberry Pi 5 devices -- from sensor daemons to network gateways. One command to build, one command to flash.
+Managing fleets of embedded Linux devices with traditional tools like Yocto means writing BitBake recipes, maintaining BSP layers, and waiting hours for full image rebuilds. Configuration drift across devices is the norm, not the exception.
+
+This project takes a different approach: NixOS as the operating system for IoT devices. Every device is defined as a declarative NixOS configuration. A single `nix build` produces a reproducible SD card image with the OS, services, and application code baked in. Change a config option, rebuild in seconds, flash, boot -- done. No manual provisioning, no imperative state, no surprises.
+
+Currently running in production on Raspberry Pi 5 devices collecting air quality data via SDS011 sensors, with Prometheus metrics exposed for monitoring.
 
 ## Repository structure
 
