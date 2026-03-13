@@ -88,3 +88,36 @@ just airsensor::build
 The justfile uses `ssh://rpi` as the default builder. If the connection
 works, nix delegates the aarch64 compilation to the Pi and streams the
 result back.
+
+## Cloud builders (Hetzner)
+
+Instead of a physical Pi, you can spin up ephemeral ARM instances on
+Hetzner Cloud. The Pulumi project in `infra/builder/` handles provisioning
+and automatically injects `/etc/nix/builder_ed25519.pub` so the instances
+are immediately usable as builders.
+
+One-time setup:
+
+```bash
+cd infra/builder
+pulumi stack init dev
+pulumi config set hcloud:token --secret
+```
+
+Then spin up, build, and tear down:
+
+```bash
+just builder::up
+just builder::status | jq -r '.[] | "ssh://\(.user)@\(.host) \(.arch)"' | just builder::add
+just airsensor::build
+just builder::down
+```
+
+A `cax11` instance (2 vCPU ARM, 4 GB RAM) costs about 0.006 EUR/h.
+Builders are ephemeral -- spin up before a build session, tear down after.
+
+If your builder key lives at a different path:
+
+```bash
+pulumi config set sshPublicKeyPath /path/to/key.pub
+```
