@@ -13,17 +13,17 @@ nix develop
 3. Build system image
 
 ```bash
-just build-airsensor
+just airsensor::build
 ```
 
 4. Flash to SD card and boot
 
 ```bash
-just flash airsensor /dev/sdX
+just airsensor::flash /dev/sdX
 ```
 
 5. Deploy updates over the air
 
 ```bash
-just deploy airsensor
+just airsensor::deploy
 ```

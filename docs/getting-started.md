@@ -41,7 +41,7 @@ nix develop
 ## Building an image
 
 ```bash
-just build-airsensor
+just airsensor::build
 ```
 
 This evaluates the NixOS configuration for the `airsensor` host and produces a compressed SD card image at `results/airsensor/sd-image/*.img.zst`.
@@ -88,13 +88,13 @@ pulumi config set hcloud:token --secret
 
 # spin up
 cd ../..
-just builder-up
+just builder::up
 
 # add to builder pool
-just builder-status | jq -r '.[] | "ssh://\(.user)@\(.host) \(.arch)"' | just add-builder
+just builder::status | jq -r '.[] | "ssh://\(.user)@\(.host) \(.arch)"' | just builder::add
 
 # tear down when done
-just builder-down
+just builder::down
 ```
 
 A `cax11` instance (2 vCPU ARM, 4 GB RAM) costs about 0.006 EUR/h. Builders are ephemeral -- spin up before a build session, tear down after.
@@ -110,7 +110,7 @@ lsblk
 Look for the SD card -- typically the smallest block device that just appeared (e.g. `/dev/sdb`). Make absolutely sure you have the right device.
 
 ```bash
-just flash airsensor /dev/sdX
+just airsensor::flash /dev/sdX
 ```
 
 This decompresses the image and writes it directly. There is no confirmation prompt -- double-check the device path.
@@ -147,7 +147,7 @@ Edit the host config or app code, then rebuild and reflash:
 ```bash
 # change something in hosts/airsensor/configuration.nix or apps/airdata/
 just build-airsensor
-just flash airsensor /dev/sdX
+just airsensor::flash /dev/sdX
 ```
 
 Only what changed gets rebuilt -- Nix caches everything else. A config-only change (no new packages) takes seconds to build.

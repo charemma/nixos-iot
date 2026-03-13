@@ -20,9 +20,9 @@ pulumi config set hcloud:token --secret
 From the repo root:
 
 ```bash
-just builder-up       # spin up builders
-just builder-down     # tear down builders
-just builder-status   # show running builders as JSON
+just builder::up       # spin up builders
+just builder::down     # tear down builders
+just builder::status   # show running builders as JSON
 ```
 
 Or directly from this directory:

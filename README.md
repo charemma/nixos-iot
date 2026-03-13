@@ -59,10 +59,10 @@ IoT Device
 curl -L https://nixos.org/nix/install | sh
 
 # build an image
-just build-airsensor
+just airsensor::build
 
 # flash to SD card
-just flash airsensor /dev/sdX
+just airsensor::flash /dev/sdX
 
 # boot the Pi, SSH in
 ssh iot@airsensor
