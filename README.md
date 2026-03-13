@@ -1,4 +1,4 @@
-# nixos-iot
+# nixos-iot -- reference implementation for NixOS-based IoT devices
 
 Declarative IoT platform built on NixOS. Every device is defined as a NixOS configuration. A single `nix build` produces a reproducible SD card image with the OS, services, and application code baked in. Change a config option, rebuild in seconds, flash, boot -- done. No manual provisioning, no imperative state, no configuration drift across devices.
 
