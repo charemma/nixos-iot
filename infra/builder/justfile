@@ -1,7 +1,9 @@
+set fallback := true
+
 _default:
     @just --list
 
-_conf := justfile_directory() + "/../../builders.conf"
+_conf := justfile_directory() / "builders.conf"
 
 # install node dependencies
 init:
