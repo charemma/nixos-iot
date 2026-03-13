@@ -48,7 +48,7 @@ just nix-build         # nix build
 
 **Application pattern**: Apps live in `apps/` as independent flakes with their own `flake.nix`. Each app exposes a `nixosModules.default` that the root flake imports. The module (`module.nix`) defines `services.<name>` options and a hardened systemd unit. The root flake follows the app's nixpkgs via `inputs.follows`.
 
-**Cross-compilation**: Development happens on x86_64-linux. Builds are delegated to aarch64-linux remote builders over SSH. The default builder is `ssh://rpi5` (configured in justfiles via `_builders` recipe). Additional builders can be registered in `builders.conf` at the repo root. Cloud builders can be spun up ephemerally via `infra/builder/` (Pulumi + Hetzner Cloud, TypeScript).
+**Cross-compilation**: Development happens on x86_64-linux. Builds are delegated to aarch64-linux remote builders over SSH. The default builder is `ssh://rpi` (configured in justfiles via `_builders` recipe). Additional builders can be registered in `builders.conf` at the repo root. Cloud builders can be spun up ephemerally via `infra/builder/` (Pulumi + Hetzner Cloud, TypeScript).
 
 **Product configs**: Each product in `products/<name>/configuration.nix` sets hardware board (`bcm2712` for RPi5), networking, users, and which app modules to enable.
 

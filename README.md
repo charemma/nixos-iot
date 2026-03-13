@@ -123,6 +123,7 @@ remote builder setup.
 # Documentation
 
 - [Getting started](docs/getting-started.md) -- prerequisites, building, flashing, first boot
+- [Remote builder setup](docs/remote-builder-setup.md) -- setting up a Pi as a Nix remote builder
 - [Architecture](docs/architecture.md) -- layered design, modules, products
 - [Development workflow](docs/development-workflow.md) -- day-to-day iteration
 - [Nix vs Yocto](docs/nix-vs-yocto.md) -- side-by-side comparison
