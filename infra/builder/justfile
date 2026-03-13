@@ -1,0 +1,22 @@
+_default:
+    @just --list
+
+# install node dependencies
+init:
+    npm install
+
+# spin up all configured builders
+up:
+    pulumi up --yes
+
+# tear down all builders
+down:
+    pulumi destroy --yes
+
+# show running builders as JSON
+status:
+    @pulumi stack output output 2>/dev/null | jq . || echo "[]"
+
+# review changes without applying
+plan:
+    pulumi preview

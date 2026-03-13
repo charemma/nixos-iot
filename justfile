@@ -23,15 +23,15 @@ add-builder:
 
 # spin up cloud builders (Hetzner)
 builder-up:
-    cd infra/builder && npm install --silent && pulumi up --yes
+    just -f infra/builder/justfile up
 
 # tear down cloud builders
 builder-down:
-    cd infra/builder && pulumi destroy --yes
+    just -f infra/builder/justfile down
 
 # show cloud builder status
 builder-status:
-    @cd infra/builder && pulumi stack output output 2>/dev/null | jq . || echo "[]"
+    just -f infra/builder/justfile status
 
 # internal: default builder (rpi5) + any extras from builders.conf
 _builders:
