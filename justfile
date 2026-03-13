@@ -15,6 +15,10 @@ build-airsensor:
 flash host device:
     zstdcat results/{{host}}/sd-image/*.img.zst | sudo dd of={{device}} bs=4M status=progress conv=fsync
 
+# deploy config to a running device over SSH (usage: just deploy airsensor)
+deploy host:
+    nixos-rebuild switch --flake ".#{{host}}" --target-host charemma@{{host}} --build-host charemma@{{host}} --use-remote-sudo
+
 # -- builders --
 
 # add a remote builder (usage: echo 'ssh://nix@host aarch64-linux' | just add-builder)
