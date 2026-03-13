@@ -104,13 +104,15 @@ pulumi stack init dev
 pulumi config set hcloud:token --secret
 ```
 
-Then spin up, build, and tear down:
+`just builder::up` automatically writes a `builders.conf` at the repo root
+so that all product builds pick up the cloud builders. `just builder::down`
+removes it again.
+
 
 ```bash
-just builder::up
-just builder::status | jq -r '.[] | "ssh://\(.user)@\(.host) \(.arch)"' | just builder::add
-just airsensor::build
-just builder::down
+just builder::up       # provisions instances and writes builders.conf
+just airsensor::build  # uses cloud builders automatically
+just builder::down     # destroys instances and removes builders.conf
 ```
 
 A `cax11` instance (2 vCPU ARM, 4 GB RAM) costs about 0.006 EUR/h.

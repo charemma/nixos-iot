@@ -1,17 +1,25 @@
 _default:
     @just --list
 
+_conf := justfile_directory() + "/../../builders.conf"
+
 # install node dependencies
 init:
     npm install
 
-# spin up all configured builders
+# spin up all configured builders and register them
 up: init
     pulumi up --yes
+    pulumi stack output output 2>/dev/null \
+        | jq -r '.[] | "ssh://\(.user)@\(.host) \(.arch)"' \
+        > {{ _conf }}
+    @echo "Registered $(wc -l < {{ _conf }}) cloud builder(s) in builders.conf"
 
-# tear down all builders
+# tear down all builders and clean up
 down:
     pulumi destroy --yes
+    rm -f {{ _conf }}
+    @echo "Removed builders.conf"
 
 # show running builders as JSON
 status:
@@ -20,7 +28,3 @@ status:
 # review changes without applying
 plan:
     pulumi preview
-
-# add a remote builder (usage: echo 'ssh://nix@host aarch64-linux' | just builder::add)
-add:
-    cat >> ../../builders.conf
