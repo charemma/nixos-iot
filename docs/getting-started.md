@@ -95,10 +95,21 @@ programs.ssh.matchBlocks.rpi5 = {
   user = "iot";
   identityFile = "/etc/nix/builder_ed25519";
 };
+```
 
-programs.ssh.knownHosts.rpi5 = {
-  hostNames = [ "rpi5" "192.168.1.x" ];
-  publicKey = "ssh-ed25519 AAAA...";  # from the builder's /etc/ssh/ssh_host_ed25519_key.pub
+Optionally, skip host key verification for builders. This is useful when
+builder host keys change frequently (reflashed devices, ephemeral cloud
+instances):
+
+```nix
+programs.ssh.matchBlocks.rpi5 = {
+  hostname = "192.168.1.x";
+  user = "iot";
+  identityFile = "/etc/nix/builder_ed25519";
+  extraOptions = {
+    StrictHostKeyChecking = "no";
+    UserKnownHostsFile = "/dev/null";
+  };
 };
 ```
 
