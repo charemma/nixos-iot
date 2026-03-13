@@ -60,7 +60,7 @@ If you have a Pi running NixOS or Nix (on any distro), point to it via SSH confi
 # ~/.ssh/config
 Host rpi5
     HostName 192.168.1.x
-    User charemma
+    User iot
 ```
 
 The justfile uses `ssh://rpi5` as the default builder. Make sure the remote user is in `trusted-users` in the Pi's nix config.
@@ -128,12 +128,12 @@ Eject the card, insert it into the Pi, and power on.
 The Pi boots into NixOS with:
 
 - SSH enabled on port 22
-- A `charemma` user with key-only auth (keys from `keys/authorized_keys`)
+- A `iot` user with key-only auth (keys from `keys/authorized_keys`)
 - Passwordless sudo
 - The device-specific services running (e.g. airdata exporter on the airsensor)
 
 ```bash
-ssh charemma@<pi-ip>
+ssh iot@<pi-ip>
 systemctl status airdata    # on airsensor
 curl localhost:8000/metrics # prometheus endpoint
 ```

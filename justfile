@@ -17,7 +17,7 @@ flash host device:
 
 # deploy config to a running device over SSH (usage: just deploy airsensor)
 deploy host:
-    nixos-rebuild switch --flake ".#{{host}}" --target-host charemma@{{host}} --build-host charemma@{{host}} --use-remote-sudo
+    nixos-rebuild switch --flake ".#{{host}}" --target-host iot@{{host}} --build-host iot@{{host}} --use-remote-sudo
 
 # -- builders --
 

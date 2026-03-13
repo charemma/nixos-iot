@@ -15,11 +15,11 @@
   i18n.defaultLocale = "en_US.UTF-8";
 
   # User
-  users.groups.charemma.gid = 1000;
-  users.users.charemma = {
+  users.groups.iot.gid = 1000;
+  users.users.iot = {
     isNormalUser = true;
     uid = 1000;
-    group = "charemma";
+    group = "iot";
     extraGroups = [ "wheel" "networkmanager" ];
     initialHashedPassword = "";
     openssh.authorizedKeys.keyFiles = [ sshKeys ];

@@ -45,7 +45,7 @@ just build-airsensor
 just flash airsensor /dev/sdX
 
 # boot the Pi -- SSH in, service is running
-ssh charemma@airsensor
+ssh iot@airsensor
 systemctl status airdata
 curl localhost:8000/metrics
 ```
