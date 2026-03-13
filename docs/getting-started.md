@@ -1,36 +1,16 @@
 # Getting started
 
-This guide walks through setting up the build environment, building your first SD card image, and booting a Raspberry Pi 5 with it.
-
 ## Prerequisites
 
-You need a Linux or macOS machine with:
-
 - **Nix** (2.18+) with flakes enabled
-- **An ARM builder** for cross-compilation (see [remote builders](#remote-builders) below)
-- **An SD card** and a way to write to it (Linux for `dd`, or use a flashing tool on macOS)
+- **An aarch64-linux builder** reachable via SSH (see [remote builder setup](#remote-builder-setup) below)
+- **An SD card** and a way to write to it
 
-### Installing Nix
-
-If you don't have Nix yet:
-
-```bash
-sh <(curl -L https://nixos.org/nix/install) --daemon
-```
-
-Enable flakes by adding to `~/.config/nix/nix.conf`:
-
-```
-experimental-features = nix-command flakes
-```
-
-### Entering the dev shell
+## Dev shell
 
 The repo provides a Nix dev shell with all required tools (just, pulumi, node):
 
 ```bash
-cd nixos-iot
-
 # option A: direnv (recommended)
 direnv allow
 
@@ -44,159 +24,99 @@ nix develop
 just airsensor::build
 ```
 
-This evaluates the NixOS configuration for the `airsensor` host and produces a compressed SD card image at `results/airsensor/sd-image/*.img.zst`.
+This produces a compressed SD card image at `results/airsensor/sd-image/*.img.zst`. The build targets `aarch64-linux` and is delegated to a remote ARM builder over SSH -- Nix handles this transparently.
 
-The build targets `aarch64-linux`. Since most development machines are x86_64, the actual compilation is delegated to a remote ARM builder over SSH. Nix handles this transparently -- you run the command locally, the heavy lifting happens on the builder.
+## Flashing
 
-## Remote builders
+```bash
+just airsensor::flash /dev/sdX
+```
 
-Nix needs at least one aarch64-linux builder to compile RPi5 images. There are three options, from simplest to most flexible:
+Double-check the device path -- there is no confirmation prompt.
 
-### Option 1: Use an existing Raspberry Pi
+## First boot
 
-If you have a Pi running NixOS or Nix (on any distro), you can use it as
-a builder. The justfile uses `ssh://rpi5` as the default builder. Make sure
-the remote user is in `trusted-users` in the Pi's nix config.
+The Pi boots into NixOS with SSH enabled, an `iot` user with key-only auth (keys from `modules/authorized-keys.nix`) and passwordless sudo.
 
-#### SSH setup for builders
+```bash
+ssh iot@<pi-ip>
+systemctl status airdata    # on airsensor
+curl localhost:8000/metrics
+```
 
-When you run `nix build --builders "ssh://..."`, the build is not executed
-by your user. Your nix client delegates the job to the **Nix daemon**,
-which runs as a systemd service under root. The daemon opens the SSH
-connection to the builder, so it uses root's SSH config and known_hosts
--- not yours. A per-user `~/.ssh/config` is not enough.
+## Deploying updates
 
-The recommended setup is system-wide SSH configuration on the dev machine
-so that any user (including root/the daemon) can reach the builder. On a
-NixOS dev machine, add the following to your system configuration:
+For changes that don't require a reflash:
+
+```bash
+just airsensor::deploy
+```
+
+For app-only iteration without deploying to a device:
+
+```bash
+nix build ./apps/airdata
+./result/bin/airdata
+```
+
+---
+
+## Remote builder setup
+
+Images target `aarch64-linux` but development typically happens on `x86_64`. Nix delegates the compilation to a remote ARM builder over SSH.
+
+You can use any machine with Nix installed as a builder -- a Raspberry Pi, a cloud instance, etc. Alternatively, `boot.binfmt.emulatedSystems = [ "aarch64-linux" ]` on a NixOS dev machine enables QEMU emulation, which works but is significantly slower (~10-20x).
+
+### SSH and the Nix daemon
+
+When you run `nix build --builders "ssh://..."`, **your user does not open the SSH connection**. The nix client delegates the job to the Nix daemon, which runs as a systemd service under root. The daemon opens the SSH connection, so it uses root's SSH config and known_hosts -- not yours. A per-user `~/.ssh/config` is not enough.
+
+The recommended setup is a dedicated build key and system-wide SSH configuration so that any user on the dev machine (including the daemon) can reach the builder without manual `/root/.ssh/` entries.
+
+### Step by step
+
+1. Generate a dedicated key pair for nix builds (one-time):
+
+```bash
+sudo ssh-keygen -t ed25519 -f /etc/nix/builder_ed25519 -N "" -C "nix-builder"
+```
+
+2. Authorize the key on the builder:
+
+```bash
+sudo ssh-copy-id -i /etc/nix/builder_ed25519.pub iot@rpi5
+```
+
+3. Add system-wide SSH config on the dev machine. On NixOS, in your system configuration:
 
 ```nix
-# 1. Generate a dedicated key pair for nix builds (one-time):
-#    sudo ssh-keygen -t ed25519 -f /etc/nix/builder_ed25519 -N ""
-
-# 2. System-wide SSH config for the builder host
 programs.ssh.matchBlocks.rpi5 = {
   hostname = "192.168.1.x";
   user = "iot";
   identityFile = "/etc/nix/builder_ed25519";
 };
 
-# 3. Pin the builder's host key so known_hosts is never an issue
 programs.ssh.knownHosts.rpi5 = {
   hostNames = [ "rpi5" "192.168.1.x" ];
   publicKey = "ssh-ed25519 AAAA...";  # from the builder's /etc/ssh/ssh_host_ed25519_key.pub
 };
 ```
 
-Then authorize the build key on the builder:
+4. Make sure the builder user is in `trusted-users` in the builder's nix config.
 
-```bash
-sudo ssh-copy-id -i /etc/nix/builder_ed25519.pub iot@rpi5
-```
+### Cloud builders
 
-This approach keeps all SSH config declarative and user-independent.
-No manual entries in `/root/.ssh/` needed.
-
-For a production setup, also consider baking stable SSH host keys into the
-product images (instead of letting NixOS generate random ones on first
-boot). This prevents known_hosts mismatches after every reflash.
-
-### Option 2: Use binfmt/QEMU emulation
-
-Add this to your NixOS config and rebuild:
-
-```nix
-boot.binfmt.emulatedSystems = [ "aarch64-linux" ];
-```
-
-This emulates ARM on your x86 CPU. It works but is significantly slower than native builders (~10-20x). Fine for small changes, painful for full image builds.
-
-### Option 3: Spin up a cloud builder
-
-The `infra/builder/` directory contains a Pulumi project that provisions ARM servers on Hetzner Cloud. It uses the same builder key from `/etc/nix/builder_ed25519.pub` by default -- the cloud instances are automatically provisioned with that key authorized.
+The `infra/builder/` directory contains a Pulumi project that provisions ephemeral ARM servers on Hetzner Cloud. It uses `/etc/nix/builder_ed25519.pub` by default -- cloud instances are automatically provisioned with that key authorized.
 
 ```bash
 # one-time setup
-cd infra/builder
-npm install
-pulumi stack init dev
+just builder::init
 pulumi config set hcloud:token --secret
 
-# spin up
-cd ../..
+# spin up, build, tear down
 just builder::up
-
-# add to builder pool
-just builder::status | jq -r '.[] | "ssh://\(.user)@\(.host) \(.arch)"' | just builder::add
-
-# tear down when done
+just airsensor::build
 just builder::down
 ```
 
-If your builder key lives at a different path, override it:
-
-```bash
-pulumi config set sshPublicKeyPath /path/to/key.pub
-```
-
-A `cax11` instance (2 vCPU ARM, 4 GB RAM) costs about 0.006 EUR/h. Builders are ephemeral -- spin up before a build session, tear down after.
-
-## Flashing the SD card
-
-Insert the SD card and identify the device:
-
-```bash
-lsblk
-```
-
-Look for the SD card -- typically the smallest block device that just appeared (e.g. `/dev/sdb`). Make absolutely sure you have the right device.
-
-```bash
-just airsensor::flash /dev/sdX
-```
-
-This decompresses the image and writes it directly. There is no confirmation prompt -- double-check the device path.
-
-Alternatively, flash manually:
-
-```bash
-zstdcat results/airsensor/sd-image/*.img.zst | sudo dd of=/dev/sdX bs=4M status=progress conv=fsync
-```
-
-Eject the card, insert it into the Pi, and power on.
-
-## First boot
-
-The Pi boots into NixOS with:
-
-- SSH enabled on port 22
-- A `iot` user with key-only auth (keys from `modules/authorized-keys.nix`)
-- Passwordless sudo
-- The device-specific services running (e.g. airdata exporter on the airsensor)
-
-```bash
-ssh iot@<pi-ip>
-systemctl status airdata    # on airsensor
-curl localhost:8000/metrics # prometheus endpoint
-```
-
-The IP depends on your network. Check your router's DHCP leases or use `nmap -sn 192.168.1.0/24` to find it.
-
-## Making changes
-
-Edit the host config or app code, then rebuild and reflash:
-
-```bash
-# change something in products/airsensor/configuration.nix or apps/airdata/
-just build-airsensor
-just airsensor::flash /dev/sdX
-```
-
-Only what changed gets rebuilt -- Nix caches everything else. A config-only change (no new packages) takes seconds to build.
-
-For iterating on the app code without reflashing, you can also build and test the app directly:
-
-```bash
-nix build ./apps/airdata
-./result/bin/airdata
-```
+A `cax11` instance (2 vCPU ARM, 4 GB RAM) costs about 0.006 EUR/h.
