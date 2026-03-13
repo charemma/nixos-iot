@@ -1,0 +1,11 @@
+{
+  "name": "nix-builder",
+  "main": "index.ts",
+  "devDependencies": {
+    "@types/node": "^22"
+  },
+  "dependencies": {
+    "@pulumi/pulumi": "^3",
+    "@pulumi/hcloud": "^1"
+  }
+}

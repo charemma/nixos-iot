@@ -1,0 +1,6 @@
+result
+results/
+builders.conf
+.direnv/
+node_modules/
+.env

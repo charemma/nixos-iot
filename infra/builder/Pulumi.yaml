@@ -1,0 +1,3 @@
+name: nix-builder
+runtime: nodejs
+description: On-demand Nix remote builders on Hetzner Cloud
