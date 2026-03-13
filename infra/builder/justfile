@@ -6,7 +6,7 @@ init:
     npm install
 
 # spin up all configured builders
-up:
+up: init
     pulumi up --yes
 
 # tear down all builders
