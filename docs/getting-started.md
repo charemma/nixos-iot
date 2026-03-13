@@ -54,36 +54,49 @@ Nix needs at least one aarch64-linux builder to compile RPi5 images. There are t
 
 ### Option 1: Use an existing Raspberry Pi
 
-If you have a Pi running NixOS or Nix (on any distro), point to it via SSH config:
+If you have a Pi running NixOS or Nix (on any distro), you can use it as
+a builder. The justfile uses `ssh://rpi5` as the default builder. Make sure
+the remote user is in `trusted-users` in the Pi's nix config.
 
-```
-# ~/.ssh/config
-Host rpi5
-    HostName 192.168.1.x
-    User iot
-```
+#### SSH setup for builders
 
-The justfile uses `ssh://rpi5` as the default builder. Make sure the remote user is in `trusted-users` in the Pi's nix config.
-
-**Note on SSH and root**: when you run `nix build --builders "ssh://..."`,
-the build is not executed by your user. Your nix client delegates the job
-to the **Nix daemon**, which runs as root. The daemon opens the SSH
+When you run `nix build --builders "ssh://..."`, the build is not executed
+by your user. Your nix client delegates the job to the **Nix daemon**,
+which runs as a systemd service under root. The daemon opens the SSH
 connection to the builder, so it uses root's SSH config and known_hosts
-(`/root/.ssh/`), not yours.
+-- not yours. A per-user `~/.ssh/config` is not enough.
 
-This means the builder's host key must be in `/root/.ssh/known_hosts` or
-in the system-wide `/etc/ssh/ssh_known_hosts`. On NixOS, the cleanest
-approach is:
+The recommended setup is system-wide SSH configuration on the dev machine
+so that any user (including root/the daemon) can reach the builder. On a
+NixOS dev machine, add the following to your system configuration:
 
 ```nix
-# in your dev machine's NixOS config
+# 1. Generate a dedicated key pair for nix builds (one-time):
+#    sudo ssh-keygen -t ed25519 -f /etc/nix/builder_ed25519 -N ""
+
+# 2. System-wide SSH config for the builder host
+programs.ssh.matchBlocks.rpi5 = {
+  hostname = "192.168.1.x";
+  user = "iot";
+  identityFile = "/etc/nix/builder_ed25519";
+};
+
+# 3. Pin the builder's host key so known_hosts is never an issue
 programs.ssh.knownHosts.rpi5 = {
   hostNames = [ "rpi5" "192.168.1.x" ];
-  publicKey = "ssh-ed25519 AAAA...";
+  publicKey = "ssh-ed25519 AAAA...";  # from the builder's /etc/ssh/ssh_host_ed25519_key.pub
 };
 ```
 
-For a production setup, consider baking stable SSH host keys into the
+Then authorize the build key on the Pi by adding the public key
+(`/etc/nix/builder_ed25519.pub`) to the `iot` user's authorized keys --
+either in `modules/authorized-keys.nix` in this repo or directly on
+the Pi.
+
+This approach keeps all SSH config declarative and user-independent.
+No manual entries in `/root/.ssh/` needed.
+
+For a production setup, also consider baking stable SSH host keys into the
 product images (instead of letting NixOS generate random ones on first
 boot). This prevents known_hosts mismatches after every reflash.
 
