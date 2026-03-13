@@ -65,6 +65,28 @@ Host rpi5
 
 The justfile uses `ssh://rpi5` as the default builder. Make sure the remote user is in `trusted-users` in the Pi's nix config.
 
+**Note on SSH and root**: when you run `nix build --builders "ssh://..."`,
+the build is not executed by your user. Your nix client delegates the job
+to the **Nix daemon**, which runs as root. The daemon opens the SSH
+connection to the builder, so it uses root's SSH config and known_hosts
+(`/root/.ssh/`), not yours.
+
+This means the builder's host key must be in `/root/.ssh/known_hosts` or
+in the system-wide `/etc/ssh/ssh_known_hosts`. On NixOS, the cleanest
+approach is:
+
+```nix
+# in your dev machine's NixOS config
+programs.ssh.knownHosts.rpi5 = {
+  hostNames = [ "rpi5" "192.168.1.x" ];
+  publicKey = "ssh-ed25519 AAAA...";
+};
+```
+
+For a production setup, consider baking stable SSH host keys into the
+product images (instead of letting NixOS generate random ones on first
+boot). This prevents known_hosts mismatches after every reflash.
+
 ### Option 2: Use binfmt/QEMU emulation
 
 Add this to your NixOS config and rebuild:
