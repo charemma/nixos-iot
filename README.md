@@ -33,8 +33,8 @@ share the same app or module.
 | Layer | What | Where |
 |-------|------|-------|
 | Applications | Product-specific daemons and services | `apps/` |
-| NixOS modules | Shared system configuration (networking, users, tools) | `hosts/`, `modules/` |
-| Products | Concrete device definitions composed from the above | `hosts/<name>/` |
+| NixOS modules | Shared system configuration (networking, users, tools) | `products/`, `modules/` |
+| Products | Concrete device definitions composed from the above | `products/<name>/` |
 | Infrastructure | Ephemeral ARM build servers | `infra/` |
 
 Everything lives in a single repository so that changes across layers --
@@ -60,12 +60,13 @@ over SSH.
 ```
 apps/        product applications, packaged as independent Nix flakes
   airdata/     SDS011 particulate matter exporter (Go)
-hosts/       product definitions, one per device
+products/       product definitions, one per device
   airsensor/   air quality sensor node
   gateway/     network gateway
 infra/       declarative build infrastructure
   builder/     ephemeral ARM builders on Hetzner Cloud (Pulumi, TypeScript)
-keys/        SSH authorized keys baked into every image
+modules/     shared NixOS modules included by all products
+  authorized-keys.nix   SSH authorized keys for the iot user
 docs/        architecture and workflow documentation
 ```
 
@@ -100,7 +101,7 @@ curl -L https://nixos.org/nix/install | sh
 nix develop
 
 # add your SSH public keys (the repo ships the author's keys)
-cp ~/.ssh/id_ed25519.pub keys/authorized_keys
+# edit modules/authorized-keys.nix and add your key to the list
 
 # build the airsensor SD card image
 just airsensor::build

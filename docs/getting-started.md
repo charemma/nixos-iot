@@ -128,7 +128,7 @@ Eject the card, insert it into the Pi, and power on.
 The Pi boots into NixOS with:
 
 - SSH enabled on port 22
-- A `iot` user with key-only auth (keys from `keys/authorized_keys`)
+- A `iot` user with key-only auth (keys from `modules/authorized-keys.nix`)
 - Passwordless sudo
 - The device-specific services running (e.g. airdata exporter on the airsensor)
 
@@ -145,7 +145,7 @@ The IP depends on your network. Check your router's DHCP leases or use `nmap -sn
 Edit the host config or app code, then rebuild and reflash:
 
 ```bash
-# change something in hosts/airsensor/configuration.nix or apps/airdata/
+# change something in products/airsensor/configuration.nix or apps/airdata/
 just build-airsensor
 just airsensor::flash /dev/sdX
 ```

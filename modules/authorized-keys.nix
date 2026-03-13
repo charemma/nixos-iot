@@ -1,0 +1,9 @@
+{ config, lib, ... }:
+
+{
+  users.users.iot.openssh.authorizedKeys.keys = [
+    "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAICbWNkSKK+ytdkDGGbol8VWlKOSJgZh+GLGWgGaDsEJv"
+    "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIOypxHQ8rbiAtjWY+62C0OAUZ9gKjX4luk5RucR+4LPj"
+    "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIPDM0X4KGLF8cE9S6qTGxZeSXBijJ9eeWp0lXwNkF6bS"
+  ];
+}

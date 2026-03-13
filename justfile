@@ -1,8 +1,8 @@
 _default:
     @just --list --list-submodules
 
-mod airsensor 'hosts/airsensor/justfile'
-mod gateway 'hosts/gateway/justfile'
+mod airsensor 'products/airsensor/justfile'
+mod gateway 'products/gateway/justfile'
 mod builder 'infra/builder/justfile'
 
 # internal: default builder (rpi5) + any extras from builders.conf

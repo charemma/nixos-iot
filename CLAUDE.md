@@ -44,13 +44,15 @@ just nix-build         # nix build
 
 ## Architecture
 
-**Flake structure**: The root `flake.nix` defines two `nixosConfigurations` (airsensor, gateway), both targeting `aarch64-linux`. Each composes `raspberry-pi-nix` hardware modules with host-specific config from `hosts/`.
+**Flake structure**: The root `flake.nix` defines two `nixosConfigurations` (airsensor, gateway), both targeting `aarch64-linux`. Each composes `raspberry-pi-nix` hardware modules with host-specific config from `products/`.
 
 **Application pattern**: Apps live in `apps/` as independent flakes with their own `flake.nix`. Each app exposes a `nixosModules.default` that the root flake imports. The module (`module.nix`) defines `services.<name>` options and a hardened systemd unit. The root flake follows the app's nixpkgs via `inputs.follows`.
 
 **Cross-compilation**: Development happens on x86_64-linux. Builds are delegated to aarch64-linux remote builders over SSH. The default builder is `ssh://rpi5` (configured in justfiles via `_builders` recipe). Additional builders can be registered in `builders.conf` at the repo root. Cloud builders can be spun up ephemerally via `infra/builder/` (Pulumi + Hetzner Cloud, TypeScript).
 
-**Host configs**: Each host in `hosts/<name>/configuration.nix` sets hardware board (`bcm2712` for RPi5), networking, users, and which app modules to enable. SSH keys from `keys/authorized_keys` are baked into every image.
+**Product configs**: Each product in `products/<name>/configuration.nix` sets hardware board (`bcm2712` for RPi5), networking, users, and which app modules to enable.
+
+**Shared modules**: Reusable NixOS modules in `modules/`. Currently `authorized-keys.nix` manages SSH access for the `iot` user across all products.
 
 **Justfile modules**: The root justfile only loads submodules via `mod`. Per-host justfiles use `set fallback := true` to inherit shared recipes like `_builders` from the parent.
 
@@ -60,4 +62,4 @@ just nix-build         # nix build
 - The `iot` user is the standard user on all devices (key-only SSH, passwordless sudo)
 - App flakes are consumed as path inputs (`path:./apps/<name>`) by the root flake
 - When adding a new app: create `apps/<name>/flake.nix` with a `nixosModules.default`, add it as an input in root `flake.nix`, enable it in the host config
-- When adding a new host: create `hosts/<name>/configuration.nix`, add a `nixosConfigurations.<name>` in root `flake.nix`, create `hosts/<name>/justfile` with build/flash/deploy recipes, register it as a `mod` in root justfile
+- When adding a new product: create `products/<name>/configuration.nix`, add a `nixosConfigurations.<name>` in root `flake.nix`, create `products/<name>/justfile` with build/flash/deploy recipes, register it as a `mod` in root justfile

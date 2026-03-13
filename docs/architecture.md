@@ -16,7 +16,7 @@ Applications (apps/)
 NixOS Modules
    |
    v
-Host Definition (hosts/)
+Product Definition (products/)
    |
    v
 SD Card Image
@@ -30,7 +30,7 @@ IoT Device
 **Applications** -- standalone programs (e.g. the airdata Go daemon)
 packaged as Nix flakes with their own NixOS service modules.
 
-**Host definitions** -- each host in `hosts/` combines hardware config,
+**Product definitions** -- each host in `products/` combines hardware config,
 OS settings and application modules into a complete system.
 
 **Infrastructure** -- cloud builders in `infra/` provide remote ARM

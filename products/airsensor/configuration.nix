@@ -1,4 +1,4 @@
-{ config, lib, pkgs, sshKeys, ... }:
+{ config, lib, pkgs, ... }:
 
 {
   raspberry-pi-nix.board = "bcm2712";
@@ -8,7 +8,7 @@
     fsType = "ext4";
   };
 
-  networking.hostName = "gateway";
+  networking.hostName = "airsensor";
   networking.networkmanager.enable = true;
 
   time.timeZone = "Europe/Athens";
@@ -22,7 +22,7 @@
     group = "iot";
     extraGroups = [ "wheel" "networkmanager" ];
     initialHashedPassword = "";
-    openssh.authorizedKeys.keyFiles = [ sshKeys ];
+
   };
 
   security.sudo = {
@@ -32,7 +32,7 @@
 
   services.openssh.enable = true;
 
-  networking.wireguard.enable = true;
+  services.airdata.enable = true;
 
   nix.settings.experimental-features = [ "nix-command" "flakes" ];
 

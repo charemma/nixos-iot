@@ -1,18 +1,18 @@
-# Hosts
+# Products
 
-Each host defines a **complete IoT device configuration**.
+Each product defines a **complete IoT device configuration**.
 
-A host combines:
+A product combines:
 
 - hardware configuration
 - operating system configuration
 - system services
 - deployed applications
 
-Current hosts:
+Current products:
 
-    hosts/
+    products/
        airsensor   air quality monitoring (SDS011 sensor)
        gateway     WireGuard VPN gateway
 
-Each host produces a deployable SD card image.
+Each product produces a deployable SD card image.

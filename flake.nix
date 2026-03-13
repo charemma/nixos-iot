@@ -8,29 +8,26 @@
     airdata.inputs.nixpkgs.follows = "nixpkgs";
   };
 
-  outputs = { self, nixpkgs, raspberry-pi-nix, airdata, ... }:
-    let
-      sshKeys = ./keys/authorized_keys;
-    in {
+  outputs = { self, nixpkgs, raspberry-pi-nix, airdata, ... }: {
     nixosConfigurations = {
       gateway = nixpkgs.lib.nixosSystem {
         system = "aarch64-linux";
-        specialArgs = { inherit sshKeys; };
         modules = [
           raspberry-pi-nix.nixosModules.raspberry-pi
           raspberry-pi-nix.nixosModules.sd-image
-          ./hosts/gateway/configuration.nix
+          ./modules/authorized-keys.nix
+          ./products/gateway/configuration.nix
         ];
       };
 
       airsensor = nixpkgs.lib.nixosSystem {
         system = "aarch64-linux";
-        specialArgs = { inherit sshKeys; };
         modules = [
           raspberry-pi-nix.nixosModules.raspberry-pi
           raspberry-pi-nix.nixosModules.sd-image
           airdata.nixosModules.default
-          ./hosts/airsensor/configuration.nix
+          ./modules/authorized-keys.nix
+          ./products/airsensor/configuration.nix
         ];
       };
     };
