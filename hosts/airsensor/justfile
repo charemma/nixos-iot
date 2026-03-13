@@ -1,0 +1,14 @@
+_default:
+    @just --list
+
+# build sd card image
+build:
+    nix build -o ../../results/airsensor --builders "$(just -f ../../justfile _builders)" .#nixosConfigurations.airsensor.config.system.build.sdImage
+
+# flash sd card image (usage: just flash /dev/sdX)
+flash device:
+    zstdcat ../../results/airsensor/sd-image/*.img.zst | sudo dd of={{device}} bs=4M status=progress conv=fsync
+
+# deploy config to running device over SSH
+deploy:
+    nixos-rebuild switch --flake ".#airsensor" --target-host iot@airsensor --build-host iot@airsensor --use-remote-sudo

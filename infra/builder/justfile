@@ -20,3 +20,7 @@ status:
 # review changes without applying
 plan:
     pulumi preview
+
+# add a remote builder (usage: echo 'ssh://nix@host aarch64-linux' | just builder::add)
+add:
+    cat >> ../../builders.conf
