@@ -58,7 +58,7 @@ IoT Device
 # install nix (if not present)
 curl -L https://nixos.org/nix/install | sh
 
-# build an image
+# e.g. build the airsensor sd card image
 just airsensor::build
 
 # flash to SD card
