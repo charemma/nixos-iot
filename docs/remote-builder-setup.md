@@ -12,13 +12,13 @@ the Pi runs NixOS, add the following to its system configuration:
 ```nix
 nix.settings = {
   experimental-features = [ "nix-command" "flakes" ];
-  trusted-users = [ "root" "iot" ];
+  trusted-users = [ "root" "<your-user>" ];
 };
 ```
 
-`trusted-users` allows the Nix daemon on your dev machine to run
-arbitrary builds on the Pi via the `iot` user. Without this, the
-daemon will reject build requests with "user is not trusted".
+`trusted-users` must include the user that the Nix daemon connects as
+via SSH (the `user` from your SSH config in step 3 below). Without this,
+the daemon will reject build requests with "user is not trusted".
 
 Rebuild (`sudo nixos-rebuild switch`) and the Pi is ready.
 
@@ -27,7 +27,7 @@ On a non-NixOS Pi with Nix installed, add the same settings to
 
 ```
 experimental-features = nix-command flakes
-trusted-users = root iot
+trusted-users = root <your-user>
 ```
 
 Then restart the daemon: `sudo systemctl restart nix-daemon`.
@@ -43,7 +43,7 @@ sudo ssh-keygen -t ed25519 -f /etc/nix/builder_ed25519 -N "" -C "nix-builder"
 ### 2. Authorize the key on the Pi
 
 ```bash
-sudo ssh-copy-id -i /etc/nix/builder_ed25519.pub iot@rpi
+sudo ssh-copy-id -i /etc/nix/builder_ed25519.pub <your-user>@rpi
 ```
 
 ### 3. System-wide SSH config
@@ -57,7 +57,7 @@ On a NixOS dev machine, add to your system configuration:
 ```nix
 programs.ssh.matchBlocks.rpi = {
   hostname = "192.168.1.x";
-  user = "iot";
+  user = "<your-user>";
   identityFile = "/etc/nix/builder_ed25519";
 };
 ```
@@ -68,7 +68,7 @@ and its host key changes:
 ```nix
 programs.ssh.matchBlocks.rpi = {
   hostname = "192.168.1.x";
-  user = "iot";
+  user = "<your-user>";
   identityFile = "/etc/nix/builder_ed25519";
   extraOptions = {
     StrictHostKeyChecking = "no";
