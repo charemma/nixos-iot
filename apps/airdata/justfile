@@ -1,0 +1,26 @@
+_default:
+    @just --list
+
+# build the binary
+build:
+    go build -o airdata .
+
+# run locally (needs SDS011 sensor)
+run: build
+    ./airdata
+
+# run linter
+lint:
+    golangci-lint run ./...
+
+# run tests
+test:
+    go test ./...
+
+# build via nix
+nix-build:
+    nix build
+
+# clean build artifacts
+clean:
+    rm -f airdata
