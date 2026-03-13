@@ -16,16 +16,19 @@ and developer environments in a single declarative codebase.
 
 # Repository Structure
 
+```
 apps/       application workloads (Go daemons, services)
 hosts/      concrete IoT device definitions (airsensor, gateway)
 infra/      infrastructure and deployment (cloud builders)
 keys/       SSH authorized keys baked into every image
 docs/       architecture and workflow documentation
+```
 
 ---
 
 # Architecture
 
+```
 Developer
    │
    ▼
@@ -38,13 +41,14 @@ Applications
 NixOS Modules
    │
    ▼
-Product Definition
+Host Definition
    │
    ▼
 Device Image
    │
    ▼
 IoT Device
+```
 
 ---
 
