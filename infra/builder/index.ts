@@ -4,7 +4,7 @@ import * as fs from "fs";
 
 const config = new pulumi.Config();
 const location = config.get("location") ?? "nbg1";
-const sshPublicKeyPath = config.get("sshPublicKeyPath") ?? "~/.ssh/id_ed25519.pub";
+const sshPublicKeyPath = config.get("sshPublicKeyPath") ?? "/etc/nix/builder_ed25519.pub";
 const sshPublicKey = fs.readFileSync(
   sshPublicKeyPath.replace("~", process.env.HOME!),
   "utf-8",

@@ -88,10 +88,11 @@ programs.ssh.knownHosts.rpi5 = {
 };
 ```
 
-Then authorize the build key on the Pi by adding the public key
-(`/etc/nix/builder_ed25519.pub`) to the `iot` user's authorized keys --
-either in `modules/authorized-keys.nix` in this repo or directly on
-the Pi.
+Then authorize the build key on the builder:
+
+```bash
+sudo ssh-copy-id -i /etc/nix/builder_ed25519.pub iot@rpi5
+```
 
 This approach keeps all SSH config declarative and user-independent.
 No manual entries in `/root/.ssh/` needed.
@@ -112,7 +113,7 @@ This emulates ARM on your x86 CPU. It works but is significantly slower than nat
 
 ### Option 3: Spin up a cloud builder
 
-The `infra/builder/` directory contains a Pulumi project that provisions ARM servers on Hetzner Cloud:
+The `infra/builder/` directory contains a Pulumi project that provisions ARM servers on Hetzner Cloud. It uses the same builder key from `/etc/nix/builder_ed25519.pub` by default -- the cloud instances are automatically provisioned with that key authorized.
 
 ```bash
 # one-time setup
@@ -130,6 +131,12 @@ just builder::status | jq -r '.[] | "ssh://\(.user)@\(.host) \(.arch)"' | just b
 
 # tear down when done
 just builder::down
+```
+
+If your builder key lives at a different path, override it:
+
+```bash
+pulumi config set sshPublicKeyPath /path/to/key.pub
 ```
 
 A `cax11` instance (2 vCPU ARM, 4 GB RAM) costs about 0.006 EUR/h. Builders are ephemeral -- spin up before a build session, tear down after.
