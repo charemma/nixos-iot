@@ -22,10 +22,23 @@ env:
     #!/usr/bin/env bash
     set -euo pipefail
     OUTPUT=$(pulumi stack output output 2>/dev/null || echo "[]")
-    # format: uri systems ssh-identity max-jobs speed-factor supported-features mandatory-features
-    BUILDERS=$(echo "$OUTPUT" | jq -r '.[] | "ssh://\(.user)@\(.host) \(.arch) /etc/nix/builder_ed25519 \(.cores) 1 - -"')
+    BUILDERS=""
+    for row in $(echo "$OUTPUT" | jq -c '.[]'); do
+        HOST=$(echo "$row" | jq -r '.host')
+        USER=$(echo "$row" | jq -r '.user')
+        ARCH=$(echo "$row" | jq -r '.arch')
+        CORES=$(echo "$row" | jq -r '.cores')
+        # fetch host key and base64 encode it (field 8 in builder format)
+        HOSTKEY=$(ssh-keyscan -t ed25519 "$HOST" 2>/dev/null | head -1 | awk '{print $3}')
+        if [ -z "$HOSTKEY" ]; then
+            echo "warning: could not fetch host key for $HOST" >&2
+            continue
+        fi
+        # format: uri systems ssh-identity max-jobs speed-factor supported-features mandatory-features public-host-key
+        BUILDERS+="ssh://${USER}@${HOST} ${ARCH} /etc/nix/builder_ed25519 ${CORES} 1 - - ${HOSTKEY};"
+    done
+    BUILDERS="${BUILDERS%;}"
     echo "export NIX_BUILDERS=\"$BUILDERS\""
-    echo "export NIX_SSHOPTS=\"-o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null\""
 
 # show running builders as JSON
 status:
