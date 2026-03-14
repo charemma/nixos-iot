@@ -6,6 +6,6 @@ config:
       serverType: cax11
       arch: aarch64-linux
       cores: 2
-      count: 3
+      count: 1
   hcloud:token:
     secure: AAABAHsLo3NvDNp5+rYFrtQvxmtpDe1ewSkpnFgo1LlNP8u6Tnr1IGB7xfhHlaLYg3FGc45MRliwKDSq6V+QSnO8pyiFMfR/3tulN3gd15pBz2uCH3DE5Z8vdzeazsj9

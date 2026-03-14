@@ -7,15 +7,28 @@ _default:
 init:
     npm install
 
-# spin up all configured builders
+# spin up all configured builders and register host keys
 up: init
     pulumi up --yes
-    @echo ""
-    @echo "Run 'eval \$(just builder::env)' to configure your shell for building."
+    #!/usr/bin/env bash
+    set -euo pipefail
+    HOSTS=$(pulumi stack output output 2>/dev/null | jq -r '.[].host')
+    for host in $HOSTS; do
+        echo "Registering host key for $host..."
+        sudo ssh-keyscan -t ed25519 "$host" 2>/dev/null | sudo tee -a /etc/ssh/ssh_known_hosts > /dev/null
+    done
+    echo ""
+    echo "Run 'eval \$(just builder::env)' to configure your shell for building."
 
-# tear down all builders
+# tear down all builders and clean up host keys
 down:
+    #!/usr/bin/env bash
+    set -euo pipefail
+    HOSTS=$(pulumi stack output output 2>/dev/null | jq -r '.[].host')
     pulumi destroy --yes
+    for host in $HOSTS; do
+        sudo ssh-keygen -R "$host" -f /etc/ssh/ssh_known_hosts 2>/dev/null || true
+    done
 
 # export builder environment variables for eval
 env:
@@ -24,7 +37,6 @@ env:
     OUTPUT=$(pulumi stack output output 2>/dev/null || echo "[]")
     BUILDERS=$(echo "$OUTPUT" | jq -r '.[] | "ssh://\(.user)@\(.host) \(.arch) - - - - /etc/nix/builder_ed25519"')
     echo "export NIX_BUILDERS=\"$BUILDERS\""
-    echo "export NIX_SSHOPTS=\"-o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null\""
 
 # show running builders as JSON
 status:
