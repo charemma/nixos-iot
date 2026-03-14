@@ -5,6 +5,6 @@ mod airsensor 'products/airsensor/justfile'
 mod gateway 'products/gateway/justfile'
 mod builder 'infra/builder/justfile'
 
-# internal: default builder (rpi) + any extras from cloud builders
+# internal: combine default builder (rpi) with any cloud builders from NIX_BUILDERS
 _builders:
-    @{ echo 'ssh://rpi aarch64-linux'; cat infra/builder/builders.conf 2>/dev/null; } | paste -sd ';'
+    @{ echo 'ssh://rpi aarch64-linux'; echo "${NIX_BUILDERS:-}"; } | grep -v '^$' | paste -sd ';'

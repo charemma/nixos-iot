@@ -5,8 +5,7 @@ _default:
 
 # build sd card image
 build:
-    NIX_SSHOPTS="-o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null" \
-        nix build -o results/gateway --builders "$(just _builders)" .#nixosConfigurations.gateway.config.system.build.sdImage
+    nix build -o results/gateway --builders "$(just _builders)" .#nixosConfigurations.gateway.config.system.build.sdImage
 
 # flash sd card image (usage: just flash /dev/sdX)
 flash device:
