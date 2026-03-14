@@ -1,6 +1,8 @@
 package main
 
 import (
+	"flag"
+	"fmt"
 	"log"
 	"net/http"
 	"time"
@@ -22,9 +24,13 @@ var (
 )
 
 func main() {
-	sensor, err := sds011.New("/dev/ttyUSB0")
+	device := flag.String("device", "/dev/ttyUSB0", "path to the SDS011 serial device")
+	port := flag.Int("port", 8000, "port for the Prometheus metrics endpoint")
+	flag.Parse()
+
+	sensor, err := sds011.New(*device)
 	if err != nil {
-		log.Fatalf("failed to open port: %v", err)
+		log.Fatalf("failed to open %s: %v", *device, err)
 	}
 	defer sensor.Close()
 
@@ -56,7 +62,8 @@ func main() {
 		}
 	}()
 
+	addr := fmt.Sprintf(":%d", *port)
 	http.Handle("/metrics", promhttp.Handler())
-	log.Println("[particulate-exporter] Listening on :8000")
-	log.Fatal(http.ListenAndServe(":8000", nil))
+	log.Printf("[airdata] device=%s listen=%s", *device, addr)
+	log.Fatal(http.ListenAndServe(addr, nil))
 }

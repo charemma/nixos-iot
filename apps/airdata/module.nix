@@ -28,7 +28,7 @@ in
       wantedBy = [ "multi-user.target" ];
 
       serviceConfig = {
-        ExecStart = "${self.packages.${pkgs.system}.default}/bin/airdata";
+        ExecStart = "${self.packages.${pkgs.system}.default}/bin/airdata -device ${cfg.device} -port ${toString cfg.port}";
         Restart = "on-failure";
         RestartSec = 10;
 
