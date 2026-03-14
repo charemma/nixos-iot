@@ -21,9 +21,9 @@ down:
 env:
     #!/usr/bin/env bash
     set -euo pipefail
-    WRAPPER="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/infra/builder/ssh-wrapper.sh"
     OUTPUT=$(pulumi stack output output 2>/dev/null || echo "[]")
-    BUILDERS=$(echo "$OUTPUT" | jq -r '.[] | "ssh://\(.user)@\(.host) \(.arch) - - - - /etc/nix/builder_ed25519"')
+    # format: uri systems ssh-identity max-jobs speed-factor supported-features mandatory-features
+    BUILDERS=$(echo "$OUTPUT" | jq -r '.[] | "ssh://\(.user)@\(.host) \(.arch) /etc/nix/builder_ed25519 \(.cores) 1 - -"')
     echo "export NIX_BUILDERS=\"$BUILDERS\""
     echo "export NIX_SSHOPTS=\"-o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null\""
 
