@@ -1,6 +1,5 @@
 config:
   nix-builder:location: nbg1
-  nix-builder:sshPublicKeyPath: ~/.ssh/id_ed25519.pub
   nix-builder:builders:
     aarch64:
       serverType: cax11

@@ -27,13 +27,9 @@ users:
       - ${sshPublicKey}
 
 runcmd:
-  - sh <(curl -L https://nixos.org/nix/install) --daemon --yes
-  - |
-    cat > /etc/nix/nix.conf <<EOF
-    experimental-features = nix-command flakes
-    trusted-users = root nix
-    EOF
-  - systemctl restart nix-daemon
+  - ["bash", "-c", "HOME=/root curl -L https://nixos.org/nix/install | HOME=/root bash -s -- --daemon --yes"]
+  - ["bash", "-c", "mkdir -p /etc/nix && printf 'experimental-features = nix-command flakes\\ntrusted-users = root nix\\n' > /etc/nix/nix.conf"]
+  - ["systemctl", "restart", "nix-daemon"]
 `;
 
 const sshKey = new hcloud.SshKey("nix-builder", {

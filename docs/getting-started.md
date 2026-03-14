@@ -3,7 +3,7 @@
 ## Prerequisites
 
 - **Nix** (2.18+) with flakes enabled
-- **An aarch64-linux builder** reachable via SSH (see [remote builder setup](remote-builder-setup.md))
+- **An aarch64-linux builder** reachable via SSH (see [dev machine setup](dev-machine-setup.md) and [remote builder setup](remote-builder-setup.md))
 - **An SD card** and a way to write to it
 
 ## Dev shell

@@ -6,7 +6,7 @@ On-demand ARM (aarch64) Nix remote builders on Hetzner Cloud, managed with Pulum
 
 - A [Pulumi account](https://app.pulumi.com/) (free tier works)
 - A [Hetzner Cloud](https://www.hetzner.com/cloud/) account with API access
-- A dedicated Nix builder SSH key at `/etc/nix/builder_ed25519` (see [remote builder setup](../../docs/remote-builder-setup.md))
+- A dedicated Nix builder SSH key at `/etc/nix/builder_ed25519` (see [dev machine setup](../../docs/dev-machine-setup.md))
 
 ## Setup
 
@@ -30,12 +30,19 @@ From the repo root:
 
 ```bash
 just builder::up              # provision builders
-eval $(just builder::env)     # export NIX_BUILDERS and NIX_SSHOPTS
+eval $(just builder::env)     # export NIX_BUILDERS
 just airsensor::build         # build using the cloud builders
 just builder::down            # tear down builders
 ```
 
-`builder::env` outputs shell-compatible `export` statements. The build recipes pick up `NIX_BUILDERS` automatically.
+`builder::env` generates the `NIX_BUILDERS` variable with the full
+builder string for each instance, including base64-encoded host keys
+(fetched via `ssh-keyscan`). The Nix daemon uses these embedded keys
+for host verification, so no SSH config or `known_hosts` entries are
+needed for cloud builders.
+
+After `builder::up`, wait about 90 seconds for cloud-init to finish
+installing Nix on the instances before starting a build.
 
 ## Configuration
 

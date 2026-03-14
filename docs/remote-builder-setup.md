@@ -4,6 +4,9 @@ This guide turns a Raspberry Pi into a remote ARM builder for Nix.
 After setup, `just airsensor::build` on your dev machine compiles on
 the Pi transparently.
 
+Before following this guide, make sure your dev machine is configured
+for remote builds. See [dev machine setup](dev-machine-setup.md).
+
 ## On the Pi
 
 SSH into the Pi and make sure Nix is installed with flakes enabled. If
@@ -16,9 +19,14 @@ nix.settings = {
 };
 ```
 
-`trusted-users` must include the user that the Nix daemon connects as
-via SSH (the `user` from your SSH config in step 3 below). Without this,
-the daemon will reject build requests with "user is not trusted".
+`trusted-users` must include the SSH user that the Nix daemon connects
+as. The daemon runs as root on your dev machine and opens the SSH
+connection as root, but authenticates as the user from your SSH config
+(e.g. `charemma` in `Host rpi`). That user must be trusted on the builder
+side.
+
+Without this, the builder's daemon will reject build requests with
+"user is not trusted".
 
 Rebuild (`sudo nixos-rebuild switch`) and the Pi is ready.
 
@@ -32,94 +40,31 @@ trusted-users = root <your-user>
 
 Then restart the daemon: `sudo systemctl restart nix-daemon`.
 
-## On the dev machine
+## Authorize the build key
 
-### 1. Generate a dedicated build key (one-time)
-
-```bash
-sudo ssh-keygen -t ed25519 -f /etc/nix/builder_ed25519 -N "" -C "nix-builder"
-```
-
-### 2. Authorize the key on the Pi
+Copy the builder public key to the Pi:
 
 ```bash
 sudo ssh-copy-id -i /etc/nix/builder_ed25519.pub <your-user>@rpi
 ```
 
-### 3. System-wide SSH config
-
-The Nix daemon runs as root, so it uses root's SSH config -- not yours.
-A per-user `~/.ssh/config` is not enough. Configure SSH system-wide so
-that any user (including the daemon) can reach the builder.
-
-On a NixOS dev machine, add to your system configuration:
-
-```nix
-programs.ssh.matchBlocks.rpi = {
-  hostname = "192.168.1.x";
-  user = "<your-user>";
-  identityFile = "/etc/nix/builder_ed25519";
-};
-```
-
-Optionally, skip host key verification. Useful when the Pi gets reflashed
-and its host key changes:
-
-```nix
-programs.ssh.matchBlocks.rpi = {
-  hostname = "192.168.1.x";
-  user = "<your-user>";
-  identityFile = "/etc/nix/builder_ed25519";
-  extraOptions = {
-    StrictHostKeyChecking = "no";
-    UserKnownHostsFile = "/dev/null";
-  };
-};
-```
-
-Rebuild (`sudo nixos-rebuild switch`) and you're done.
-
 ## Verify
 
 ```bash
+# test that root can reach the Pi (this is how the daemon connects)
+sudo ssh -i /etc/nix/builder_ed25519 <your-user>@rpi echo ok
+
+# run a build
 just airsensor::build
 ```
 
 The justfile uses `ssh://rpi` as the default builder. If the connection
-works, nix delegates the aarch64 compilation to the Pi and streams the
+works, Nix delegates the aarch64 compilation to the Pi and streams the
 result back.
 
-## Cloud builders (Hetzner)
+## Cloud builders
 
-Instead of a physical Pi, you can spin up ephemeral ARM instances on
-Hetzner Cloud. The Pulumi project in `infra/builder/` handles provisioning
-and automatically injects `/etc/nix/builder_ed25519.pub` so the instances
-are immediately usable as builders.
-
-One-time setup:
-
-```bash
-cd infra/builder
-pulumi stack init dev
-pulumi config set hcloud:token --secret
-```
-
-After provisioning, load the builder environment into your shell with
-`eval`. This exports `NIX_BUILDERS` and `NIX_SSHOPTS` so that all
-subsequent build commands pick up the cloud builders automatically.
-
-```bash
-just builder::up                 # provision instances
-eval $(just builder::env)        # export builder env vars
-just airsensor::build            # builds using cloud builders
-just builder::down               # destroy instances
-```
-
-A `cax11` instance (2 vCPU ARM, 4 GB RAM) costs about 0.006 EUR/h.
-Builders are ephemeral -- spin up before a build session, tear down after.
-
-If your builder key lives at a different path:
-
-```bash
-pulumi config set sshPublicKeyPath /path/to/key.pub
-```
+For cloud builders (Hetzner), see [infra/builder/README.md](../infra/builder/README.md).
+Cloud builders handle SSH automatically -- the builder string includes
+embedded host keys, and `just builder::up` provisions instances with
+the correct public key.
