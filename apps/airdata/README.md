@@ -15,19 +15,29 @@ Metrics exposed:
 
 ## Development
 
+Build and test locally without touching a device:
+
 ```bash
-# build
-just build
-
-# run locally (needs SDS011 on /dev/ttyUSB0)
-just run
-
-# lint
-just lint
-
-# build the NixOS module package
-just nix-build
+cd apps/airdata
+go build && ./airdata -port 9090
+go test ./...
 ```
+
+Or via Nix:
+
+```bash
+nix build ./apps/airdata
+./result/bin/airdata -h
+```
+
+Deploy to a running device over SSH (no reflash needed):
+
+```bash
+just airsensor::deploy
+```
+
+A full SD image (`just airsensor::build` + `just airsensor::flash`) is
+only needed for initial provisioning or boot-level changes.
 
 ## NixOS integration
 
