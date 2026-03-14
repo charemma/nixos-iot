@@ -82,9 +82,10 @@ The `infra/builder/` directory contains a Pulumi project that provisions
 ARM servers on Hetzner Cloud on demand. A typical CI/CD flow:
 
 ```bash
-just builder::up           # provision ARM instance
-just airsensor::build      # build image (compiled on the ARM builder)
-just builder::down         # tear down instance
+just builder::up              # provision ARM instance
+eval $(just builder::env)     # load builder env vars
+just airsensor::build         # build image (compiled on the ARM builder)
+just builder::down            # tear down instance
 ```
 
 No permanent build server needed. A `cax11` instance costs about 0.006 EUR/h.

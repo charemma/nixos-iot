@@ -104,15 +104,15 @@ pulumi stack init dev
 pulumi config set hcloud:token --secret
 ```
 
-`just builder::up` automatically writes a `builders.conf` at the repo root
-so that all product builds pick up the cloud builders. `just builder::down`
-removes it again.
-
+After provisioning, load the builder environment into your shell with
+`eval`. This exports `NIX_BUILDERS` and `NIX_SSHOPTS` so that all
+subsequent build commands pick up the cloud builders automatically.
 
 ```bash
-just builder::up       # provisions instances and writes builders.conf
-just airsensor::build  # uses cloud builders automatically
-just builder::down     # destroys instances and removes builders.conf
+just builder::up                 # provision instances
+eval $(just builder::env)        # export builder env vars
+just airsensor::build            # builds using cloud builders
+just builder::down               # destroy instances
 ```
 
 A `cax11` instance (2 vCPU ARM, 4 GB RAM) costs about 0.006 EUR/h.
