@@ -29,7 +29,7 @@ env:
         ARCH=$(echo "$row" | jq -r '.arch')
         CORES=$(echo "$row" | jq -r '.cores')
         # fetch host key and base64 encode it (field 8 in builder format)
-        HOSTKEY=$(ssh-keyscan -t ed25519 "$HOST" 2>/dev/null | head -1 | awk '{print $3}')
+        HOSTKEY=$(ssh-keyscan -t ed25519 "$HOST" 2>/dev/null | grep ssh-ed25519 | awk '{print $3}')
         if [ -z "$HOSTKEY" ]; then
             echo "warning: could not fetch host key for $HOST" >&2
             continue
