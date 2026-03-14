@@ -5,7 +5,8 @@ _default:
 
 # build sd card image
 build:
-    nix build -o results/airsensor --builders "$(just _builders)" .#nixosConfigurations.airsensor.config.system.build.sdImage
+    NIX_SSHOPTS="-o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null" \
+        nix build -o results/airsensor --builders "$(just _builders)" .#nixosConfigurations.airsensor.config.system.build.sdImage
 
 # flash sd card image (usage: just flash /dev/sdX)
 flash device:
