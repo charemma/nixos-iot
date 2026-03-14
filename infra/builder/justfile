@@ -13,7 +13,7 @@ init:
 up: init
     pulumi up --yes
     pulumi stack output output 2>/dev/null \
-        | jq -r '.[] | "ssh://\(.user)@\(.host) \(.arch)"' \
+        | jq -r '.[] | "ssh://\(.user)@\(.host) \(.arch) - - - - /etc/nix/builder_ed25519"' \
         > {{ _conf }}
     @echo "Registered $(wc -l < {{ _conf }}) cloud builder(s) in builders.conf"
 
