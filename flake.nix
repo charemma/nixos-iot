@@ -13,6 +13,8 @@
       sharedModules = [
         raspberry-pi-nix.nixosModules.raspberry-pi
         raspberry-pi-nix.nixosModules.sd-image
+        ./modules/rpi.nix
+        ./modules/base.nix
         ./modules/core.nix
         ./modules/user.nix
         ./modules/authorized-keys.nix
