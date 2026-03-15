@@ -32,14 +32,26 @@
       };
     };
 
-    devShells.x86_64-linux.default = nixpkgs.legacyPackages.x86_64-linux.mkShell {
-      packages = with nixpkgs.legacyPackages.x86_64-linux; [
-        pulumi
-        pulumiPackages.pulumi-nodejs
-        nodejs
-        jq
-        just
+    devShells = let
+      forAllSystems = nixpkgs.lib.genAttrs [
+        "x86_64-linux"
+        "aarch64-linux"
+        "x86_64-darwin"
+        "aarch64-darwin"
       ];
-    };
+    in forAllSystems (system:
+      let pkgs = nixpkgs.legacyPackages.${system};
+      in {
+        default = pkgs.mkShell {
+          packages = with pkgs; [
+            pulumi
+            pulumiPackages.pulumi-nodejs
+            nodejs
+            jq
+            just
+          ];
+        };
+      }
+    );
   };
 }
