@@ -21,6 +21,11 @@ model -- properties that map well to managing fleets of devices. This project
 explores that idea. For a detailed comparison, see
 [Nix vs Yocto](docs/nix-vs-yocto.md).
 
+The same flake that defines device images also provides the development
+environment. `nix develop` (or direnv) gives every contributor an identical
+shell with all required tools -- on macOS, Linux and WSL, natively, without
+Docker or devcontainers.
+
 ---
 
 # Platform Concept
