@@ -7,6 +7,13 @@
 # clearly isolated. Supporting a different board means writing a new
 # bsp-<board>.nix and swapping it in the flake, without touching any
 # other module.
+#
+# For boards already supported by the NixOS community, check
+# https://github.com/NixOS/nixos-hardware before writing a BSP from
+# scratch. For unsupported boards, an existing Yocto BSP layer from the
+# vendor is a good starting point -- the hardware-specific artifacts
+# (kernel config, device trees, firmware) can be ported to Nix even
+# though the build logic (Bitbake) cannot.
 { config, lib, ... }:
 
 {
