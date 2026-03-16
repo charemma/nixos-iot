@@ -11,10 +11,6 @@ build:
 flash device:
     zstdcat ../../results/airsensor/sd-image/*.img.zst | sudo dd of={{device}} bs=4M status=progress conv=fsync
 
-# push build closure to binary cache (excludes sd-image)
-push:
-    nix path-info -r ../../results/airsensor | grep -v 'sd-image' | xargs attic push main
-
 # deploy config to running device over SSH
 deploy:
     nixos-rebuild switch --flake ".#airsensor" --target-host iot@airsensor --build-host iot@airsensor --use-remote-sudo
