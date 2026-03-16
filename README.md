@@ -95,6 +95,24 @@ just builder::down            # tear down instance
 
 No permanent build server needed. A `cax11` instance costs about 0.006 EUR/h.
 
+Cloud builders are configured to pull from a shared binary cache, so
+repeated builds on fresh instances skip already-compiled packages.
+
+## Binary cache
+
+The project uses [Attic](https://github.com/zhaofengli/attic) as a
+self-hosted Nix binary cache. After building, push the results so
+future builds (and other machines) can reuse them:
+
+```bash
+attic push main ./results/airsensor
+```
+
+The cache at `nix.charemma.de` is the author's personal instance. To
+use this workflow yourself, set up your own Attic server (or any Nix
+binary cache) and update the substituter URLs in
+`infra/builder/index.ts` and your local `nix.conf`.
+
 ---
 
 # Quick Start
