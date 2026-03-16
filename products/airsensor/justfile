@@ -13,7 +13,7 @@ flash device:
 
 # publish build closure to binary cache
 publish-cache:
-    just _publish-cache-product airsensor
+    just publish-cache airsensor
 
 # deploy config to running device over SSH
 deploy:

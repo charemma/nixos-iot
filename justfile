@@ -5,18 +5,18 @@ mod airsensor 'products/airsensor/justfile'
 mod gateway 'products/gateway/justfile'
 mod builder 'infra/builder/justfile'
 
-# publish all build closures to binary cache
-publish-cache:
+# publish build closures to binary cache (usage: just publish-cache [product])
+publish-cache product="":
     #!/usr/bin/env bash
-    for dir in results/*/; do
-        product=$(basename "$dir")
-        echo "Publishing $product..."
-        nix path-info -r "results/$product" | grep -v 'sd-image' | xargs attic push main
-    done
-
-# publish a single product closure to binary cache
-_publish-cache-product product:
-    nix path-info -r results/{{product}} | grep -v 'sd-image' | xargs attic push main
+    if [ -n "{{product}}" ]; then
+        nix path-info -r "results/{{product}}" | grep -v 'sd-image' | xargs attic push main
+    else
+        for dir in results/*/; do
+            product=$(basename "$dir")
+            echo "Publishing $product..."
+            nix path-info -r "results/$product" | grep -v 'sd-image' | xargs attic push main
+        done
+    fi
 
 # internal: use NIX_BUILDERS if set, otherwise fall back to local rpi
 _builders:

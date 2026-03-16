@@ -13,7 +13,7 @@ flash device:
 
 # publish build closure to binary cache
 publish-cache:
-    just _publish-cache-product gateway
+    just publish-cache gateway
 
 # deploy config to running device over SSH
 deploy:
