@@ -11,6 +11,10 @@ build:
 flash device:
     zstdcat ../../results/gateway/sd-image/*.img.zst | sudo dd of={{device}} bs=4M status=progress conv=fsync
 
+# publish build closure to binary cache
+publish-cache:
+    just _publish-cache-product gateway
+
 # deploy config to running device over SSH
 deploy:
     nixos-rebuild switch --flake ".#gateway" --target-host iot@gateway --build-host iot@gateway --use-remote-sudo
