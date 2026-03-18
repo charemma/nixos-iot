@@ -47,18 +47,51 @@ NixOS generates a QEMU runner script automatically from the system
 configuration. The VM boots into a full NixOS system with all hardening
 and services active.
 
-Connect to the running VM via SSH port forwarding:
+The VM runs in bridged mode, so it gets its own IP from your network's
+DHCP server and can see real traffic -- just like a physical device
+plugged into the switch.
+
+#### Bridge setup (one-time)
+
+The VM needs a Linux bridge interface on the host. Create one that
+includes your physical interface:
 
 ```bash
-QEMU_NET_OPTS="hostfwd=tcp::2222-:22,hostfwd=tcp::9090-:9090" \
-  just sentinel-node::vm
+# create bridge and attach your ethernet interface
+sudo ip link add br0 type bridge
+sudo ip link set enp3s0 master br0
+sudo ip link set br0 up
+
+# move IP from physical interface to bridge
+sudo dhclient br0
 ```
 
-Then in another terminal:
+On NixOS, declare it permanently:
+
+```nix
+networking.bridges.br0.interfaces = [ "enp3s0" ];
+networking.interfaces.br0.useDHCP = true;
+```
+
+QEMU also needs permission to use the bridge. Add to
+`/etc/qemu/bridge.conf`:
+
+```
+allow br0
+```
+
+#### Running
 
 ```bash
-ssh -p 2222 iot@localhost       # SSH into the VM
-curl localhost:9090/metrics     # query sentinel metrics
+just sentinel-node::vm              # uses br0 by default
+just sentinel-node::vm enp3s0       # use a different bridge interface
+```
+
+Find the VM's IP via your router's DHCP lease table or `arp -a`, then:
+
+```bash
+ssh iot@<vm-ip>                     # SSH into the VM
+curl <vm-ip>:9090/metrics           # query sentinel metrics
 ```
 
 Note: there is no interactive console login (hardening). SSH is the
