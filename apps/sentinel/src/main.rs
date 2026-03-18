@@ -6,6 +6,10 @@ use std::net::{Ipv4Addr, TcpListener};
 use std::sync::{Arc, Mutex};
 use std::thread;
 
+fn log(msg: &str) {
+    eprintln!(r#"{{"type":"log","msg":"{msg}"}}"#);
+}
+
 struct Metrics {
     packets_total: u64,
     bytes_total: u64,
@@ -65,17 +69,17 @@ fn capture_loop(interface: &str, metrics: Arc<Mutex<Metrics>>) {
         Ok(cap) => match cap.promisc(true).immediate_mode(true).open() {
             Ok(cap) => cap,
             Err(e) => {
-                eprintln!("[sentinel] failed to open capture on {interface}: {e}");
+                log(&format!("failed to open capture on {interface}: {e}"));
                 return;
             }
         },
         Err(e) => {
-            eprintln!("[sentinel] device {interface} not found: {e}");
+            log(&format!("device {interface} not found: {e}"));
             return;
         }
     };
 
-    eprintln!("[sentinel] capturing on {interface}");
+    log(&format!("capturing on {interface}"));
 
     while let Ok(packet) = cap.next_packet() {
         if let Some((info, event)) = net::parse_packet(packet.data) {
@@ -104,11 +108,11 @@ fn capture_loop(interface: &str, metrics: Arc<Mutex<Metrics>>) {
 fn metrics_server(port: u16, metrics: Arc<Mutex<Metrics>>) {
     let addr = format!("0.0.0.0:{port}");
     let listener = TcpListener::bind(&addr).unwrap_or_else(|e| {
-        eprintln!("[sentinel] failed to bind {addr}: {e}");
+        log(&format!("failed to bind {addr}: {e}"));
         std::process::exit(1);
     });
 
-    eprintln!("[sentinel] metrics on {addr}");
+    log(&format!("listening on {addr}"));
 
     for stream in listener.incoming().flatten() {
         let body = metrics.lock().unwrap().render();
@@ -128,7 +132,7 @@ fn main() {
         .parse()
         .expect("SENTINEL_PORT must be a valid port number");
 
-    eprintln!("[sentinel] interface={interface} metrics=:{port}");
+    log(&format!("starting interface={interface} metrics=:{port}"));
 
     let metrics = Arc::new(Mutex::new(Metrics::new()));
 
