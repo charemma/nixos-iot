@@ -4,3 +4,4 @@ builders.conf
 .direnv/
 node_modules/
 .env
+*.qcow2
