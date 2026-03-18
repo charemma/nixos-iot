@@ -21,7 +21,7 @@ publish-cache:
     just publish-cache sentinel-node
 
 # build x86 QEMU VM for local development
-vm-build:
+build-vm:
     nix build -o ../../results/sentinel-node-vm .#nixosConfigurations.sentinel-node-vm.config.system.build.vm
 
 # run VM bridged to host network (gets own IP, sees real traffic)
