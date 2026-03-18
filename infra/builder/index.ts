@@ -19,6 +19,16 @@ interface BuilderConfig {
 
 const builders: Record<string, BuilderConfig> = config.requireObject("builders");
 
+const nixConf = [
+  "build-users-group = nixbld",
+  "experimental-features = nix-command flakes",
+  "trusted-users = root nix",
+  "substituters = https://cache.nixos.org https://nix.charemma.de/main",
+  "trusted-public-keys = cache.nixos.org-1:6NCHdD59X431o0gWypbMrAURkbJ16ZPMQFGspcDShjY= main:IRUYNlrph4qBjaoO79uXivgGPZVsemrRQaWph965JqY=",
+].join("\n");
+
+const nixConfBase64 = Buffer.from(nixConf).toString("base64");
+
 const cloudConfig = `#cloud-config
 users:
   - name: nix
@@ -26,16 +36,9 @@ users:
     ssh_authorized_keys:
       - ${sshPublicKey}
 
-write_files:
-  - path: /etc/nix/nix.conf
-    content: |
-      experimental-features = nix-command flakes
-      trusted-users = root nix
-      substituters = https://cache.nixos.org https://nix.charemma.de
-      trusted-public-keys = cache.nixos.org-1:6NCHdD59X431o0gWypbMrAURkbJ16ZPMQFGspcDShjY= main:IRUYNlrph4qBjaoO79uXivgGPZVsemrRQaWph965JqY=
-
 runcmd:
   - ["bash", "-c", "HOME=/root curl -L https://nixos.org/nix/install | HOME=/root bash -s -- --daemon --yes"]
+  - ["bash", "-c", "echo ${nixConfBase64} | base64 -d > /etc/nix/nix.conf"]
   - ["systemctl", "restart", "nix-daemon"]
 `;
 
