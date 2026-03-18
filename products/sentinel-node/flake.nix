@@ -46,7 +46,12 @@
         # dev target: x86_64 QEMU VM for local testing
         sentinel-node-vm = nixpkgs.lib.nixosSystem {
           system = "x86_64-linux";
-          modules = commonModules;
+          modules = commonModules ++ [{
+            # bridge networking: VM gets own IP, sees real traffic
+            virtualisation.qemu.networkingOptions = [
+              "-nic bridge,br=br0,model=virtio"
+            ];
+          }];
         };
       };
     };

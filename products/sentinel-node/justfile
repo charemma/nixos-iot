@@ -25,9 +25,8 @@ vm-build:
     nix build -o ../../results/sentinel-node-vm .#nixosConfigurations.sentinel-node-vm.config.system.build.vm
 
 # run VM bridged to host network (gets own IP, sees real traffic)
-vm interface="br0":
-    sudo QEMU_NET_OPTS="-netdev bridge,id=net0,br={{interface}} -device virtio-net-pci,netdev=net0" \
-        ../../results/sentinel-node-vm/bin/run-sentinel-node-vm
+vm:
+    sudo ../../results/sentinel-node-vm/bin/run-sentinel-node-vm
 
 # deploy config to running device over SSH
 deploy:
