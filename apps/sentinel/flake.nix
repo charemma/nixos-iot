@@ -23,6 +23,16 @@
           };
         });
 
+      devShells = forAllSystems (system:
+        let
+          pkgs = nixpkgs.legacyPackages.${system};
+        in
+        {
+          default = pkgs.mkShell {
+            packages = with pkgs; [ cargo rustc rust-analyzer clippy ];
+          };
+        });
+
       nixosModules.default = import ./module.nix self;
     };
 }
