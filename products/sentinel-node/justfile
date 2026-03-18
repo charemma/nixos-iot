@@ -20,12 +20,12 @@ flash device:
 publish-cache:
     just publish-cache sentinel-node
 
-# build x86 QEMU VM
-_vm-build:
+# build x86 QEMU VM (from source, trusted cache only)
+vm-build:
     {{ _nix_build }} -o ../../results/sentinel-node-vm .#nixosConfigurations.sentinel-node-vm.config.system.build.vm
 
 # run VM bridged to host network (gets own IP, sees real traffic)
-vm interface="br0": _vm-build
+vm interface="br0":
     sudo QEMU_NET_OPTS="-netdev bridge,id=net0,br={{interface}} -device virtio-net-pci,netdev=net0" \
         ../../results/sentinel-node-vm/bin/run-sentinel-node-vm
 
