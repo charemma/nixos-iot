@@ -149,16 +149,29 @@ curl <device-ip>:9090/metrics
 ```
 
 **Structured Event Log** (stderr/journald) -- individual security-relevant
-events as JSON lines for forensics and incident response:
+events as JSON lines for forensics and incident response. All output
+(status messages and events) is valid JSON, one object per line:
 
 ```bash
-journalctl -u sentinel -f -o cat
+# stream all events
+journalctl -u sentinel -b -o cat | grep '^{' | jq .
+
+# filter security events only (skip status messages)
+journalctl -u sentinel -b -o cat | grep '^{' | jq 'select(.type != "log")'
+
+# follow live
+journalctl -u sentinel -f -o cat | grep '^{' | jq .
 ```
 
 ```json
+{"type":"log","msg":"starting interface=eth0 metrics=:9090"}
+{"type":"log","msg":"capturing on eth0"}
 {"type":"dns_query","src":"192.168.1.10","domain":"example.com"}
 {"type":"tcp_connect","src":"192.168.1.10","dst":"192.168.1.1","dport":443}
 ```
+
+Note: systemd adds a `Started ...` line before the JSON output. The
+`grep '^{'` filter skips this.
 
 ## System Hardening
 
