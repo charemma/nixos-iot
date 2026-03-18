@@ -29,7 +29,12 @@
         in
         {
           default = pkgs.mkShell {
-            packages = with pkgs; [ cargo rustc rust-analyzer clippy ];
+            packages = with pkgs; [ 
+              cargo
+              rustc
+              rust-analyzer
+              clippy 
+            ];
           };
         });
 
