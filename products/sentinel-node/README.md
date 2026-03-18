@@ -21,6 +21,8 @@ for reproducibility, minimal attack surface, and hardened runtime.
 +------------------------+
 ```
 
+
+
 ## Threat Considerations
 
 | Threat | Mitigation |
@@ -33,6 +35,8 @@ for reproducibility, minimal attack surface, and hardened runtime.
 Reproducible systems also improve auditability, since the full system
 state can be reconstructed and verified.
 
+
+
 ## Why Edge-Based Security?
 
 Deploying security functionality directly at the edge enables:
@@ -42,6 +46,8 @@ Deploying security functionality directly at the edge enables:
 - lower latency for detection
 - better control over sensitive data
 
+
+
 ## Usage
 
 ```bash
@@ -49,6 +55,8 @@ just sentinel-node::build           # build SD card image
 just sentinel-node::flash /dev/sdX  # flash to SD card
 just sentinel-node::deploy          # update running device over SSH
 ```
+
+
 
 ## Configuration
 
@@ -65,6 +73,8 @@ services.sentinel = {
 The sentinel service runs as a hardened systemd unit with minimal
 privileges (DynamicUser, CAP_NET_RAW only, strict filesystem protection).
 
+
+
 ## Scope
 
 This project is intentionally limited in scope.
@@ -80,6 +90,8 @@ It is NOT:
 - a full IDS
 - a SIEM system
 - a penetration testing toolkit
+
+
 
 ## Future Directions
 
