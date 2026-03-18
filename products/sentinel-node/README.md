@@ -136,6 +136,30 @@ services.sentinel = {
 The sentinel service runs as a hardened systemd unit with minimal
 privileges (DynamicUser, CAP_NET_RAW only, strict filesystem protection).
 
+## Outputs
+
+The sentinel service produces two types of output:
+
+**Prometheus Metrics** (`/metrics`) -- aggregated counters for dashboards
+and alerting: packets captured, bytes, DNS queries, TCP connection
+attempts, unique source IPs.
+
+```bash
+curl <device-ip>:9090/metrics
+```
+
+**Structured Event Log** (stderr/journald) -- individual security-relevant
+events as JSON lines for forensics and incident response:
+
+```bash
+journalctl -u sentinel -f -o cat
+```
+
+```json
+{"type":"dns_query","src":"192.168.1.10","domain":"example.com"}
+{"type":"tcp_connect","src":"192.168.1.10","dst":"192.168.1.1","dport":443}
+```
+
 ## System Hardening
 
 The product configuration includes:

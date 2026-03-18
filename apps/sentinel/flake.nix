@@ -20,6 +20,8 @@
             version = "0.1.0";
             src = ./.;
             cargoLock.lockFile = ./Cargo.lock;
+            nativeBuildInputs = [ pkgs.pkg-config ];
+            buildInputs = [ pkgs.libpcap ];
           };
         });
 
@@ -29,11 +31,13 @@
         in
         {
           default = pkgs.mkShell {
-            packages = with pkgs; [ 
+            packages = with pkgs; [
               cargo
               rustc
               rust-analyzer
-              clippy 
+              clippy
+              pkg-config
+              libpcap
             ];
           };
         });
