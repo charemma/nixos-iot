@@ -1,23 +1,28 @@
 set fallback := true
 
+# supply chain policy: no third-party binary substitutes
+# all packages are built from source or pulled from the trusted internal
+# cache only. this ensures full provenance over every artifact in the image.
+_nix_build := "nix build --option substitute true --option substituters https://nix.charemma.de/main"
+
 _default:
     @just --list
 
-# build sd card image
+# build sd card image (from source, trusted cache only)
 build:
-    nix build -o ../../results/sentinel-node --builders "$(just _builders)" .#nixosConfigurations.sentinel-node.config.system.build.sdImage
+    {{ _nix_build }} -o ../../results/sentinel-node --builders "$(just _builders)" .#nixosConfigurations.sentinel-node.config.system.build.sdImage
 
 # flash sd card image (usage: just flash /dev/sdX)
 flash device:
     zstdcat ../../results/sentinel-node/sd-image/*.img.zst | sudo dd of={{device}} bs=4M status=progress conv=fsync
 
-# publish build closure to binary cache
+# publish build closure to internal cache
 publish-cache:
     just publish-cache sentinel-node
 
-# build and run x86 QEMU VM for local testing
+# build and run x86 QEMU VM for local testing (from source, trusted cache only)
 vm:
-    nix build -o ../../results/sentinel-node-vm .#nixosConfigurations.sentinel-node-vm.config.system.build.vm
+    {{ _nix_build }} -o ../../results/sentinel-node-vm .#nixosConfigurations.sentinel-node-vm.config.system.build.vm
     ../../results/sentinel-node-vm/bin/run-sentinel-node-vm
 
 # deploy config to running device over SSH
