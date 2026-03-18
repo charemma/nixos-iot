@@ -6,10 +6,10 @@
 ![Status](https://img.shields.io/badge/status-reference%20implementation-blue)
 
 A reference implementation exploring how **NixOS and Nix Flakes** can be
-used to build a platform for IoT products. The repository demonstrates a
-**platform engineering approach for embedded Linux**: shared modules and
-applications composed into concrete product definitions, built reproducibly
-with ephemeral cloud infrastructure.
+used to build a platform for IoT and edge devices. The repository
+demonstrates a **platform engineering approach for embedded Linux**: shared
+modules and applications composed into concrete product definitions, built
+reproducibly with full supply chain control.
 
 ---
 
@@ -31,60 +31,95 @@ Docker or devcontainers.
 # Platform Concept
 
 The platform separates reusable building blocks from concrete product
-definitions. Applications and NixOS modules are developed independently
-and composed into product-specific configurations. Multiple products can
-share the same app or module.
+definitions. Each product owns its own `flake.nix` and declares which
+platform modules and applications it needs. Multiple products can share
+the same app or module.
 
 | Layer | What | Where |
 |-------|------|-------|
 | Applications | Product-specific daemons and services | `apps/` |
-| NixOS modules | Shared system configuration (networking, users, tools) | `products/`, `modules/` |
+| Platform modules | Shared system configuration (networking, users, BSP) | `modules/` |
 | Products | Concrete device definitions composed from the above | `products/<name>/` |
 | Infrastructure | Ephemeral ARM build servers | `infra/` |
 
-Everything lives in a single repository so that changes across layers --
-a new sensor driver, the NixOS module that runs it, and the host config
-that enables it -- can land in a single commit.
+Each product has its own `flake.nix` that imports only what it needs.
+The root flake re-exports all product configurations. This gives each
+product team full control over its dependencies.
 
 ---
 
 # Products
 
-| Product | Role | Key services |
-|---------|------|-------------|
-| **airsensor** | Air quality sensor node | airdata (SDS011 Prometheus exporter) |
-| **gateway** | Network gateway | WireGuard VPN |
+| Product | Role | App | Target |
+|---------|------|-----|--------|
+| **sentinel-node** | Edge security monitor | sentinel (Rust, libpcap) | x86 VM / RPi 5 |
+| **airsensor** | Air quality sensor | airdata (Go, SDS011) | RPi 5 |
+| **gateway** | Network gateway | WireGuard | RPi 5 |
 
-Both run on Raspberry Pi 5 (`bcm2712`), boot from SD card and are managed
-over SSH.
+---
+
+# Try It: Sentinel Node
+
+The sentinel-node is the easiest way to try this project. It builds and
+runs as a QEMU VM on any x86 Linux machine -- no Raspberry Pi, no cloud
+builder, no special hardware needed.
+
+```bash
+# enter the dev shell
+nix develop
+
+# build the VM (first build takes a while, subsequent builds are cached)
+just sentinel-node::build-vm
+
+# start the VM (bridged to your local network)
+just sentinel-node::vm
+
+# find the VM's IP
+sudo arp-scan -l -I br0 | grep 52:54:00
+
+# query metrics
+curl <vm-ip>:9090/metrics
+
+# view live security events
+ssh iot@<vm-ip> journalctl -u sentinel -f -o cat | grep '^{' | jq .
+```
+
+The VM boots into a hardened NixOS system with:
+- passive network traffic capture (libpcap, promiscuous mode)
+- Prometheus metrics (packets, bytes, DNS queries, TCP connections, unique IPs)
+- structured JSON event log (DNS queries, connection attempts)
+- default-deny firewall, kernel hardening, audit logging
+- no debug tools, no interactive console (SSH-only)
+
+For the full SD card image (Raspberry Pi), see
+[sentinel-node/README.md](products/sentinel-node/README.md).
 
 ---
 
 # Repository Structure
 
 ```
-apps/        product applications, packaged as independent Nix flakes
-  airdata/     SDS011 particulate matter exporter (Go)
-products/       product definitions, one per device
-  airsensor/   air quality sensor node
-  gateway/     network gateway
-infra/       declarative build infrastructure
-  builder/     ephemeral ARM builders on Hetzner Cloud (Pulumi, TypeScript)
-modules/     shared NixOS modules included by all products
-  authorized-keys.nix   SSH authorized keys for the iot user
-docs/        architecture and workflow documentation
+apps/               product applications, packaged as independent Nix flakes
+  sentinel/           network security monitor (Rust)
+  airdata/            SDS011 particulate matter exporter (Go)
+products/           product definitions, each with its own flake.nix
+  sentinel-node/      edge security monitor (hardened, minimal)
+  airsensor/          air quality sensor node
+  gateway/            network gateway
+modules/            shared NixOS platform modules (BSP, base, user management)
+  flake.nix           exports all shared modules as a flake
+infra/              declarative build infrastructure
+  builder/            ephemeral ARM builders on Hetzner Cloud (Pulumi)
+docs/               architecture and workflow documentation
 ```
 
 ---
 
 # Build Infrastructure
 
-Images target `aarch64-linux` but development happens on `x86_64`. Builds
-are delegated to remote ARM builders over SSH -- Nix handles this
-transparently.
-
-The `infra/builder/` directory contains a Pulumi project that provisions
-ARM servers on Hetzner Cloud on demand. A typical CI/CD flow:
+For products targeting Raspberry Pi (`aarch64-linux`), builds are delegated
+to remote ARM builders over SSH. The `infra/builder/` directory contains a
+Pulumi project that provisions ARM servers on Hetzner Cloud on demand:
 
 ```bash
 just builder::up              # provision ARM instance
@@ -95,8 +130,8 @@ just builder::down            # tear down instance
 
 No permanent build server needed. A `cax11` instance costs about 0.006 EUR/h.
 
-Cloud builders are configured to pull from a shared binary cache, so
-repeated builds on fresh instances skip already-compiled packages.
+The sentinel-node VM target (`just sentinel-node::build-vm`) builds natively
+on x86 and does not require a remote builder.
 
 ## Binary cache
 
@@ -105,51 +140,21 @@ self-hosted Nix binary cache. After building, push the results so
 future builds (and other machines) can reuse them:
 
 ```bash
-attic push main ./results/airsensor
+just sentinel-node::publish-cache
 ```
 
-The cache at `nix.charemma.de` is the author's personal instance. To
-use this workflow yourself, set up your own Attic server (or any Nix
-binary cache) and update the substituter URLs in
-`infra/builder/index.ts` and your local `nix.conf`.
-
----
-
-# Quick Start
-
-```bash
-# install nix (if not present)
-curl -L https://nixos.org/nix/install | sh
-
-# enter the dev shell
-nix develop
-
-# add your SSH public keys (the repo ships the author's keys)
-# edit modules/authorized-keys.nix and add your key to the list
-
-# build the airsensor SD card image
-just airsensor::build
-
-# flash to SD card
-just airsensor::flash /dev/sdX
-
-# boot the Pi, SSH in
-ssh iot@airsensor
-systemctl status airdata
-curl localhost:8000/metrics
-```
-
-See [Getting started](docs/getting-started.md) for prerequisites and
-remote builder setup.
+The sentinel-node release build enforces a strict supply chain policy:
+it only pulls from the internal cache, never from cache.nixos.org. This
+ensures full provenance over every artifact in the image.
 
 ---
 
 # Documentation
 
-- [Getting started](docs/getting-started.md) -- prerequisites, building, flashing, first boot
+- [Getting started](docs/getting-started.md) -- prerequisites, building, flashing
+- [Dev machine setup](docs/dev-machine-setup.md) -- builder key, SSH config, how the Nix daemon connects
 - [Remote builder setup](docs/remote-builder-setup.md) -- setting up a Pi as a Nix remote builder
 - [Architecture](docs/architecture.md) -- layered design, modules, products
-- [Development workflow](docs/development-workflow.md) -- day-to-day iteration
 - [Nix vs Yocto](docs/nix-vs-yocto.md) -- side-by-side comparison
 
 ---
