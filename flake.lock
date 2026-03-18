@@ -113,7 +113,8 @@
       "inputs": {
         "airdata": "airdata",
         "nixpkgs": "nixpkgs",
-        "raspberry-pi-nix": "raspberry-pi-nix"
+        "raspberry-pi-nix": "raspberry-pi-nix",
+        "sentinel": "sentinel"
       }
     },
     "rpi-bluez-firmware-src": {
@@ -234,6 +235,22 @@
         "repo": "rpicam-apps",
         "type": "github"
       }
+    },
+    "sentinel": {
+      "inputs": {
+        "nixpkgs": [
+          "nixpkgs"
+        ]
+      },
+      "locked": {
+        "path": "./apps/sentinel",
+        "type": "path"
+      },
+      "original": {
+        "path": "./apps/sentinel",
+        "type": "path"
+      },
+      "parent": []
     }
   },
   "root": "root",

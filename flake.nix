@@ -6,9 +6,11 @@
     raspberry-pi-nix.url = "github:nix-community/raspberry-pi-nix";
     airdata.url = "path:./apps/airdata";
     airdata.inputs.nixpkgs.follows = "nixpkgs";
+    sentinel.url = "path:./apps/sentinel";
+    sentinel.inputs.nixpkgs.follows = "nixpkgs";
   };
 
-  outputs = { self, nixpkgs, raspberry-pi-nix, airdata, ... }:
+  outputs = { self, nixpkgs, raspberry-pi-nix, airdata, sentinel, ... }:
     let
       sharedModules = [
         raspberry-pi-nix.nixosModules.raspberry-pi
@@ -33,6 +35,14 @@
         modules = sharedModules ++ [
           airdata.nixosModules.default
           ./products/airsensor/configuration.nix
+        ];
+      };
+
+      sentinel-node = nixpkgs.lib.nixosSystem {
+        system = "aarch64-linux";
+        modules = sharedModules ++ [
+          sentinel.nixosModules.default
+          ./products/sentinel-node/configuration.nix
         ];
       };
     };

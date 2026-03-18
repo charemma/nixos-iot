@@ -3,6 +3,7 @@ _default:
 
 mod airsensor 'products/airsensor/justfile'
 mod gateway 'products/gateway/justfile'
+mod sentinel-node 'products/sentinel-node/justfile'
 mod builder 'infra/builder/justfile'
 
 # publish build closures to binary cache (usage: just publish-cache [product])

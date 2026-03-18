@@ -1,0 +1,20 @@
+set fallback := true
+
+_default:
+    @just --list
+
+# build sd card image
+build:
+    nix build -o ../../results/sentinel-node --builders "$(just _builders)" .#nixosConfigurations.sentinel-node.config.system.build.sdImage
+
+# flash sd card image (usage: just flash /dev/sdX)
+flash device:
+    zstdcat ../../results/sentinel-node/sd-image/*.img.zst | sudo dd of={{device}} bs=4M status=progress conv=fsync
+
+# publish build closure to binary cache
+publish-cache:
+    just publish-cache sentinel-node
+
+# deploy config to running device over SSH
+deploy:
+    nixos-rebuild switch --flake ".#sentinel-node" --target-host iot@sentinel-node --build-host iot@sentinel-node --use-remote-sudo
