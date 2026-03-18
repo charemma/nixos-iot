@@ -1,51 +1,21 @@
 {
-  description = "NixOS-based IoT/embedded image builder for Raspberry Pi 5";
+  description = "NixOS-based IoT/embedded platform for Raspberry Pi";
 
   inputs = {
     nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
-    raspberry-pi-nix.url = "github:nix-community/raspberry-pi-nix";
-    airdata.url = "path:./apps/airdata";
-    airdata.inputs.nixpkgs.follows = "nixpkgs";
-    sentinel.url = "path:./apps/sentinel";
-    sentinel.inputs.nixpkgs.follows = "nixpkgs";
+    airsensor.url = "path:./products/airsensor";
+    airsensor.inputs.nixpkgs.follows = "nixpkgs";
+    gateway.url = "path:./products/gateway";
+    gateway.inputs.nixpkgs.follows = "nixpkgs";
+    sentinel-node.url = "path:./products/sentinel-node";
+    sentinel-node.inputs.nixpkgs.follows = "nixpkgs";
   };
 
-  outputs = { self, nixpkgs, raspberry-pi-nix, airdata, sentinel, ... }:
-    let
-      sharedModules = [
-        raspberry-pi-nix.nixosModules.raspberry-pi
-        raspberry-pi-nix.nixosModules.sd-image
-        ./modules/bsp-rpi.nix
-        ./modules/base.nix
-        ./modules/core.nix
-        ./modules/user.nix
-        ./modules/authorized-keys.nix
-      ];
-    in {
-    nixosConfigurations = {
-      gateway = nixpkgs.lib.nixosSystem {
-        system = "aarch64-linux";
-        modules = sharedModules ++ [
-          ./products/gateway/configuration.nix
-        ];
-      };
-
-      airsensor = nixpkgs.lib.nixosSystem {
-        system = "aarch64-linux";
-        modules = sharedModules ++ [
-          airdata.nixosModules.default
-          ./products/airsensor/configuration.nix
-        ];
-      };
-
-      sentinel-node = nixpkgs.lib.nixosSystem {
-        system = "aarch64-linux";
-        modules = sharedModules ++ [
-          sentinel.nixosModules.default
-          ./products/sentinel-node/configuration.nix
-        ];
-      };
-    };
+  outputs = { self, nixpkgs, airsensor, gateway, sentinel-node, ... }: {
+    nixosConfigurations =
+      airsensor.nixosConfigurations //
+      gateway.nixosConfigurations //
+      sentinel-node.nixosConfigurations;
 
     devShells = let
       forAllSystems = nixpkgs.lib.genAttrs [
