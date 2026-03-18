@@ -15,6 +15,11 @@ flash device:
 publish-cache:
     just publish-cache sentinel-node
 
+# build and run x86 QEMU VM for local testing
+vm:
+    nix build -o ../../results/sentinel-node-vm .#nixosConfigurations.sentinel-node-vm.config.system.build.vm
+    ../../results/sentinel-node-vm/bin/run-sentinel-node-vm
+
 # deploy config to running device over SSH
 deploy:
     nixos-rebuild switch --flake ".#sentinel-node" --target-host iot@sentinel-node --build-host iot@sentinel-node --use-remote-sudo

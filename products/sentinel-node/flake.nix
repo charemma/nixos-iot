@@ -13,15 +13,10 @@
     sentinel.inputs.nixpkgs.follows = "nixpkgs";
   };
 
-  outputs = { self, nixpkgs, platform, sentinel, ... }: {
-    nixosConfigurations.sentinel-node = nixpkgs.lib.nixosSystem {
-      system = "aarch64-linux";
-      modules = [
-        # hardware support
-        platform.nixosModules.raspberry-pi
-        platform.nixosModules.sd-image
-        platform.nixosModules.bsp-rpi
-
+  outputs = { self, nixpkgs, platform, sentinel, ... }:
+    let
+      # modules shared between VM and hardware targets
+      commonModules = [
         # base system (networking, locale, SSH, flakes)
         platform.nixosModules.base
         platform.nixosModules.user
@@ -36,6 +31,23 @@
         # product-specific config (hardening, firewall, audit)
         ./configuration.nix
       ];
+    in {
+      nixosConfigurations = {
+        # release target: aarch64 SD card image for Raspberry Pi
+        sentinel-node = nixpkgs.lib.nixosSystem {
+          system = "aarch64-linux";
+          modules = [
+            platform.nixosModules.raspberry-pi
+            platform.nixosModules.sd-image
+            platform.nixosModules.bsp-rpi
+          ] ++ commonModules;
+        };
+
+        # dev target: x86_64 QEMU VM for local testing
+        sentinel-node-vm = nixpkgs.lib.nixosSystem {
+          system = "x86_64-linux";
+          modules = commonModules;
+        };
+      };
     };
-  };
 }
