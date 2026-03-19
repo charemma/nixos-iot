@@ -27,17 +27,9 @@ publish-cache:
 build-vm:
     nix build -o ../../results/sentinel-node-vm .#nixosConfigurations.sentinel-node-vm-{{ _vm_arch }}.config.system.build.vm
 
-# run VM (Linux: bridged QEMU, macOS: open qcow2 in UTM)
+# run VM via QEMU (bridged on Linux, vmnet-shared on macOS)
 vm:
-    #!/usr/bin/env bash
-    set -euo pipefail
-    if [ "$(uname -s)" = "Darwin" ]; then
-        echo "VM image built at: results/sentinel-node-vm"
-        echo "Open the qcow2 disk in UTM to boot the VM."
-        echo "Disk: $(readlink ../../results/sentinel-node-vm)/sentinel-node.qcow2"
-    else
-        sudo ../../results/sentinel-node-vm/bin/run-sentinel-node-vm
-    fi
+    sudo ../../results/sentinel-node-vm/bin/run-sentinel-node-vm
 
 # deploy config to running device over SSH
 deploy:
