@@ -5,6 +5,9 @@ set fallback := true
 # cache only. this ensures full provenance over every artifact in the image.
 _nix_release := "nix build --option substitute true --option substituters https://nix.charemma.de/main"
 
+# detect VM architecture: x86_64 on Linux, aarch64 on macOS (Apple Silicon)
+_vm_arch := if `uname -s` == "Darwin" { "aarch64" } else { "x86_64" }
+
 _default:
     @just --list
 
@@ -20,13 +23,21 @@ flash device:
 publish-cache:
     just publish-cache sentinel-node
 
-# build x86 QEMU VM for local development
+# build VM image for the current platform (x86_64 on Linux, aarch64 on macOS)
 build-vm:
-    nix build -o ../../results/sentinel-node-vm .#nixosConfigurations.sentinel-node-vm.config.system.build.vm
+    nix build -o ../../results/sentinel-node-vm .#nixosConfigurations.sentinel-node-vm-{{ _vm_arch }}.config.system.build.vm
 
-# run VM bridged to host network (gets own IP, sees real traffic)
+# run VM (Linux: bridged QEMU, macOS: open qcow2 in UTM)
 vm:
-    sudo ../../results/sentinel-node-vm/bin/run-sentinel-node-vm
+    #!/usr/bin/env bash
+    set -euo pipefail
+    if [ "$(uname -s)" = "Darwin" ]; then
+        echo "VM image built at: results/sentinel-node-vm"
+        echo "Open the qcow2 disk in UTM to boot the VM."
+        echo "Disk: $(readlink ../../results/sentinel-node-vm)/sentinel-node.qcow2"
+    else
+        sudo ../../results/sentinel-node-vm/bin/run-sentinel-node-vm
+    fi
 
 # deploy config to running device over SSH
 deploy:

@@ -15,7 +15,7 @@
 
   outputs = { self, nixpkgs, platform, sentinel, ... }:
     let
-      # modules shared between VM and hardware targets
+      # modules shared across all targets (hardware, VM, UTM)
       commonModules = [
         # base system (networking, locale, SSH, flakes)
         platform.nixosModules.base
@@ -31,6 +31,8 @@
         # product-specific config (hardening, firewall, audit)
         ./configuration.nix
       ];
+
+      vmModule = system: "${nixpkgs}/nixos/modules/virtualisation/qemu-vm.nix";
     in {
       nixosConfigurations = {
         # release target: aarch64 SD card image for Raspberry Pi
@@ -43,16 +45,29 @@
           ] ++ commonModules;
         };
 
-        # dev target: x86_64 QEMU VM for local testing
-        sentinel-node-vm = nixpkgs.lib.nixosSystem {
+        # dev VM: x86_64 for Linux hosts
+        sentinel-node-vm-x86_64 = nixpkgs.lib.nixosSystem {
           system = "x86_64-linux";
           modules = commonModules ++ [
-            "${nixpkgs}/nixos/modules/virtualisation/qemu-vm.nix"
+            (vmModule "x86_64-linux")
             {
               # bridge networking: VM gets own IP, sees real traffic
               # fixed MAC so the VM is identifiable via arp-scan
               virtualisation.qemu.networkingOptions = [
                 "-nic bridge,br=br0,model=virtio,mac=52:54:00:5e:4e:01"
+              ];
+            }
+          ];
+        };
+
+        # dev VM: aarch64 for macOS (Apple Silicon) via UTM or QEMU
+        sentinel-node-vm-aarch64 = nixpkgs.lib.nixosSystem {
+          system = "aarch64-linux";
+          modules = commonModules ++ [
+            (vmModule "aarch64-linux")
+            {
+              virtualisation.qemu.networkingOptions = [
+                "-nic vmnet-shared,model=virtio,mac=52:54:00:5e:4e:01"
               ];
             }
           ];
