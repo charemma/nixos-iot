@@ -7,6 +7,11 @@ _nix_release := "nix build --option substitute true --option substituters https:
 
 # detect VM architecture: x86_64 on Linux, aarch64 on macOS (Apple Silicon)
 _vm_arch := if `uname -s` == "Darwin" { "aarch64" } else { "x86_64" }
+_vm_qemu := if _vm_arch == "aarch64" { "qemu-system-aarch64" } else { "qemu-system-x86_64" }
+_vm_machine := if _vm_arch == "aarch64" { "virt" } else { "q35" }
+_vm_accel := if `uname -s` == "Darwin" { "hvf" } else { "kvm:tcg" }
+_vm_nic := if `uname -s` == "Darwin" { "vmnet-shared,model=virtio,mac=52:54:00:5e:4e:01" } else { "bridge,br=br0,model=virtio,mac=52:54:00:5e:4e:01" }
+_vm_result := "../../results/sentinel-node-vm"
 
 _default:
     @just --list
@@ -23,13 +28,29 @@ flash device:
 publish-cache:
     just publish-cache sentinel-node
 
-# build VM image for the current platform (x86_64 on Linux, aarch64 on macOS)
+# build VM disk image for the current platform
 build-vm:
-    nix build -o ../../results/sentinel-node-vm .#nixosConfigurations.sentinel-node-vm-{{ _vm_arch }}.config.system.build.vm
+    nix build --option substituters "https://nix.charemma.de/main https://cache.nixos.org" -o {{ _vm_result }} .#nixosConfigurations.sentinel-node-vm-{{ _vm_arch }}.config.system.build.vmBundle
 
 # run VM via QEMU (bridged on Linux, vmnet-shared on macOS)
 vm:
-    sudo ../../results/sentinel-node-vm/bin/run-sentinel-node-vm
+    #!/usr/bin/env bash
+    set -euo pipefail
+    VM="{{ _vm_result }}"
+    TOPLEVEL=$(cat "$VM/toplevel")
+    sudo {{ _vm_qemu }} \
+        -machine {{ _vm_machine }} \
+        -cpu max \
+        -accel {{ _vm_accel }} \
+        -m 1024 \
+        -smp 2 \
+        -nographic \
+        -device virtio-rng-pci \
+        -nic {{ _vm_nic }} \
+        -drive file="$VM/disk.qcow2",format=qcow2,if=virtio \
+        -kernel "$VM/kernel" \
+        -initrd "$VM/initrd" \
+        -append "$(cat $VM/kernel-params) init=$TOPLEVEL/init root=/dev/vda console={{ if _vm_arch == "aarch64" { "ttyAMA0,115200n8" } else { "ttyS0,115200n8" } }}"
 
 # deploy config to running device over SSH
 deploy:

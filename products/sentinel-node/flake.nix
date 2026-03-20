@@ -15,9 +15,8 @@
 
   outputs = { self, nixpkgs, platform, sentinel, ... }:
     let
-      # modules shared across all targets (hardware, VM, UTM)
+      # modules shared across all targets (hardware, VM)
       commonModules = [
-        # base system (networking, locale, SSH, flakes)
         platform.nixosModules.base
         platform.nixosModules.user
         platform.nixosModules.authorized-keys
@@ -25,14 +24,9 @@
         # note: core.nix deliberately excluded -- no debug tools on a
         # hardened security node (no vim, htop, curl, tmux)
 
-        # application
         sentinel.nixosModules.default
-
-        # product-specific config (hardening, firewall, audit)
         ./configuration.nix
       ];
-
-      vmModule = system: "${nixpkgs}/nixos/modules/virtualisation/qemu-vm.nix";
     in {
       nixosConfigurations = {
         # release target: aarch64 SD card image for Raspberry Pi
@@ -49,27 +43,17 @@
         sentinel-node-vm-x86_64 = nixpkgs.lib.nixosSystem {
           system = "x86_64-linux";
           modules = commonModules ++ [
-            (vmModule "x86_64-linux")
-            {
-              # bridge networking: VM gets own IP, sees real traffic
-              # fixed MAC so the VM is identifiable via arp-scan
-              virtualisation.qemu.networkingOptions = [
-                "-nic bridge,br=br0,model=virtio,mac=52:54:00:5e:4e:01"
-              ];
-            }
+            platform.nixosModules.vm-image
+            { boot.kernelParams = [ "console=ttyS0,115200n8" ]; }
           ];
         };
 
-        # dev VM: aarch64 for macOS (Apple Silicon) via UTM or QEMU
+        # dev VM: aarch64 for macOS (Apple Silicon)
         sentinel-node-vm-aarch64 = nixpkgs.lib.nixosSystem {
           system = "aarch64-linux";
           modules = commonModules ++ [
-            (vmModule "aarch64-linux")
-            {
-              virtualisation.qemu.networkingOptions = [
-                "-nic vmnet-shared,model=virtio,mac=52:54:00:5e:4e:01"
-              ];
-            }
+            platform.nixosModules.vm-image
+            { boot.kernelParams = [ "console=ttyAMA0,115200n8" ]; }
           ];
         };
       };

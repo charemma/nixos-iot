@@ -13,6 +13,7 @@
       core = import ./core.nix;
       user = import ./user.nix;
       authorized-keys = import ./authorized-keys.nix;
+      vm-image = import ./vm-image.nix;
       raspberry-pi = raspberry-pi-nix.nixosModules.raspberry-pi;
       sd-image = raspberry-pi-nix.nixosModules.sd-image;
     };
