@@ -44,7 +44,10 @@
           system = "x86_64-linux";
           modules = commonModules ++ [
             platform.nixosModules.vm-image
-            { boot.kernelParams = [ "console=ttyS0,115200n8" ]; }
+            {
+              boot.kernelParams = [ "console=ttyS0,115200n8" ];
+              services.sentinel.interface = "enp0s1";
+            }
           ];
         };
 
@@ -53,7 +56,10 @@
           system = "aarch64-linux";
           modules = commonModules ++ [
             platform.nixosModules.vm-image
-            { boot.kernelParams = [ "console=ttyAMA0,115200n8" ]; }
+            {
+              boot.kernelParams = [ "console=ttyAMA0,115200n8" ];
+              services.sentinel.interface = "enp0s1";
+            }
           ];
         };
       };
