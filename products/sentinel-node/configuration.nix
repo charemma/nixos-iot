@@ -7,7 +7,6 @@
 
   services.sentinel = {
     enable = true;
-    interface = "eth0";
     port = 9090;
   };
 

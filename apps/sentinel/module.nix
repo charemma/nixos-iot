@@ -10,8 +10,8 @@ in
 
     interface = lib.mkOption {
       type = lib.types.str;
-      default = "eth0";
-      description = "Network interface to monitor.";
+      default = "";
+      description = "Network interface to monitor. Empty string means auto-detect.";
     };
 
     port = lib.mkOption {
@@ -28,8 +28,9 @@ in
       wantedBy = [ "multi-user.target" ];
 
       environment = {
-        SENTINEL_INTERFACE = cfg.interface;
         SENTINEL_PORT = toString cfg.port;
+      } // lib.optionalAttrs (cfg.interface != "") {
+        SENTINEL_INTERFACE = cfg.interface;
       };
 
       serviceConfig = {

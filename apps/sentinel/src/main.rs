@@ -126,8 +126,16 @@ fn metrics_server(port: u16, metrics: Arc<Mutex<Metrics>>) {
     }
 }
 
+fn default_interface() -> String {
+    pcap::Device::lookup()
+        .ok()
+        .flatten()
+        .map(|d| d.name)
+        .unwrap_or_else(|| "eth0".to_string())
+}
+
 fn main() {
-    let interface = env_or("SENTINEL_INTERFACE", "eth0");
+    let interface = env_or("SENTINEL_INTERFACE", &default_interface());
     let port: u16 = env_or("SENTINEL_PORT", "9090")
         .parse()
         .expect("SENTINEL_PORT must be a valid port number");
