@@ -12,7 +12,14 @@
   outputs = { self, nixpkgs, platform, airdata, ... }: {
     nixosConfigurations.airsensor = nixpkgs.lib.nixosSystem {
       system = "aarch64-linux";
-      modules = builtins.attrValues platform.nixosModules ++ [
+      modules = [
+        platform.nixosModules.raspberry-pi
+        platform.nixosModules.sd-image
+        platform.nixosModules.bsp-rpi
+        platform.nixosModules.base
+        platform.nixosModules.core
+        platform.nixosModules.user
+        platform.nixosModules.authorized-keys
         airdata.nixosModules.default
         ./configuration.nix
       ];
